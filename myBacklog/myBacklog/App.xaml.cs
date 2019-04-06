@@ -1,4 +1,5 @@
-﻿using System;
+﻿using myBacklog.Views;
+using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -11,7 +12,7 @@ namespace myBacklog
         {
             InitializeComponent();
 
-            MainPage = new MainPage();
+            MainPage = new NavigationPage(new SetCategoryPage());
         }
 
         protected override void OnStart()
