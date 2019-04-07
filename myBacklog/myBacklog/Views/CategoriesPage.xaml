@@ -6,7 +6,6 @@
              Title="Backlog">
     <ContentPage.Content>
         <StackLayout>
-            <ViewModels:SetCategoryViewModel/>
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>

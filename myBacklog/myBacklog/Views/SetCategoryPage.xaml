@@ -5,7 +5,7 @@
              xmlns:behaviors="clr-namespace:myBacklog.Behaviors"
              x:Class="myBacklog.Views.SetCategoryPage"
              x:Name="Page"
-             Title="New category">
+             Title="{Binding CategoryName}">
     <ContentPage.Resources>
         <Style x:Key="LabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="Large"/>
@@ -61,19 +61,14 @@
             <Setter Property="Margin" Value="5,0,0,0"/>
             <Setter Property="FontSize" Value="Medium"/>
         </Style>
+        <ToolbarItem x:Key="ConfirmButton"
+                     Icon="confirm"
+                     Command="{Binding ConfirmCommand}"/>
     </ContentPage.Resources>
-    <ContentPage.BindingContext>
-        <viewmodels:SetCategoryViewModel x:Name="ViewModel"/>
-    </ContentPage.BindingContext>
-    <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Save"
-                     Priority="1"
-                     Order="Primary"/>
-    </ContentPage.ToolbarItems>
     <ContentPage.Content>
         <ScrollView>
             <StackLayout>
-                <Grid x:Name="MainContent">
+                <StackLayout x:Name="MainContent">
                     <StackLayout>
                         <Label Style="{StaticResource LabelStyle}"
                                Text="Name"/>
@@ -112,10 +107,7 @@
                             </Entry>
                         </StackLayout>
                     </StackLayout>
-                    <Button CornerRadius="30"
-                                 WidthRequest="5"
-                                 HeightRequest="30"/>
-                </Grid>
+                </StackLayout>
                 <ListView x:Name="ColorsListView"
                           Style="{StaticResource ColorsListStyle}"
                           ItemSelected="ColorsListView_ItemSelected">

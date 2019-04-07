@@ -1,10 +1,11 @@
 ﻿using myBacklog.Models;
+using myBacklog.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows.Input;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -13,9 +14,27 @@ namespace myBacklog.Views
 	[XamlCompilation(XamlCompilationOptions.Compile)]
 	public partial class SetCategoryPage : ContentPage
 	{
-		public SetCategoryPage ()
+        public ICommand ConfirmCommand { get; }
+
+        public SetCategoryViewModel ViewModel { get; set; }
+
+        public SetCategoryPage(CategoryModel category = null)
 		{
 			InitializeComponent ();
+
+            if(category != null)
+            {
+                ViewModel = new SetCategoryViewModel(category);
+            }
+            else
+            {
+                ViewModel = new SetCategoryViewModel();
+            }
+            BindingContext = ViewModel;
+
+            ConfirmCommand = new Command(ConfirmCategory);
+
+            ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
 		}
 
         private void ColorBox_Tapped(object sender, EventArgs e)
@@ -35,6 +54,7 @@ namespace myBacklog.Views
                 ColorsListView.ScrollTo(color, ScrollToPosition.Center, false);
             }
             Title = "Choose color";
+            ToolbarItems.Remove(Resources["ConfirmButton"] as ToolbarItem);
         }
 
         private void ColorsListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
@@ -47,21 +67,19 @@ namespace myBacklog.Views
 
                 MainContent.IsVisible = true;
                 ColorsListView.IsVisible = false;
-
-                if(ViewModel.CategoryName != "")
-                {
-                    Title = "New category";
-                }
-                else
-                {
-                    Title = ViewModel.CategoryName;
-                }
+                
+                Title = ViewModel.CategoryName;
 
                 ViewModel.States[ViewModel.SelectedState.ID] = ViewModel.SelectedState;
-                
-                //ViewModel.OnPropertyChanged("States");
+
+                ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
             }
             ColorsListView.SelectedItem = null;
+        }
+
+        private void ConfirmCategory()
+        {
+            //To do
         }
 
         protected override bool OnBackButtonPressed()
@@ -81,6 +99,8 @@ namespace myBacklog.Views
                 {
                     Title = ViewModel.CategoryName;
                 }
+
+                ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
 
                 return true;
             }

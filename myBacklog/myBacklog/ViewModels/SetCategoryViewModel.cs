@@ -43,11 +43,25 @@ namespace myBacklog.ViewModels
         public ICommand ConfirmColorCommand { get; }
         #endregion
 
-        public SetCategoryViewModel( )
+        public SetCategoryViewModel(CategoryModel category = null)
         {
-            ID = 0;
-            CategoryName = "New category";
-            States = new ObservableCollection<StateModel>();
+            if(category != null)
+            {
+                ID = category.ID;
+                CategoryName = category.CategoryName;
+                
+                foreach(var state in category.States)
+                {
+                    States.Add(state);
+                }
+            }
+            else
+            {
+                ID = 0;
+                CategoryName = "New category";
+                States = new ObservableCollection<StateModel>();
+            }
+
 
             NewStateCommand = new Command<string>(CreateNewState);
             RemoveCommand = new Command<StateModel>(RemoveState);
