@@ -14,7 +14,7 @@ namespace myBacklog.ViewModels
         #region PropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void OnPropertyChanged(string name)
+        public void OnPropertyChanged(string name)
         {
             var changed = this.PropertyChanged;
             if (changed != null)
@@ -30,12 +30,17 @@ namespace myBacklog.ViewModels
         public string CategoryName { get; set; }
 
         public ObservableCollection<StateModel> States { get; set; }
+
+        public StateModel SelectedState { get; set; }
+
+        public List<NamedColor> Colors { get; set; }
         #endregion
 
         #region ICommand
         public ICommand NewStateCommand { get; }
         public ICommand RemoveCommand { get; }
         public ICommand ChooseColorCommand { get; }
+        public ICommand ConfirmColorCommand { get; }
         #endregion
 
         public SetCategoryViewModel( )
@@ -47,6 +52,9 @@ namespace myBacklog.ViewModels
             NewStateCommand = new Command<string>(CreateNewState);
             RemoveCommand = new Command<StateModel>(RemoveState);
             ChooseColorCommand = new Command<StateModel>(ChooseColor);
+            ConfirmColorCommand = new Command<Color>(ConfirmColor);
+
+            Colors = NamedColor.All;
         }
 
         private void CreateNewState(string name)
@@ -59,7 +67,6 @@ namespace myBacklog.ViewModels
             };
             States.Add(state);
             OnPropertyChanged("States");
-            OnPropertyChanged("StatesObservable");
         }
 
         private void RemoveState(StateModel state)
@@ -69,13 +76,13 @@ namespace myBacklog.ViewModels
 
         private void ChooseColor(StateModel state)
         {
-            var colors = NamedColor.All;
-            var picker = new Picker
-            {
-                ItemsSource = colors,
-            };
-            picker.Focus();
-            
+            SelectedState = state;
+        }
+
+        private void ConfirmColor(Color color)
+        {
+            SelectedState.Color = color;
+            SelectedState = null;
         }
     }
 }

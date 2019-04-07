@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Drawing;
 
 namespace myBacklog.Models
 {
@@ -14,11 +15,7 @@ namespace myBacklog.Models
 
         public string Name { private set; get; }
 
-        public string FriendlyName { private set; get; }
-
         public Color Color { private set; get; }
-
-        public string RgbDisplay { private set; get; }
 
         // Static members.
         static NamedColor()
@@ -27,14 +24,12 @@ namespace myBacklog.Models
             StringBuilder stringBuilder = new StringBuilder();
 
             // Loop through the public static fields of the Color structure.
-            foreach (FieldInfo fieldInfo in typeof(Color).GetRuntimeFields())
+            foreach (PropertyInfo propInfo in typeof(Color).GetRuntimeProperties())
             {
-                if (fieldInfo.IsPublic &&
-                    fieldInfo.IsStatic &&
-                    fieldInfo.FieldType == typeof(Color))
+                if (propInfo.PropertyType == typeof(Color))
                 {
                     // Convert the name to a friendly name.
-                    string name = fieldInfo.Name;
+                    string name = propInfo.Name;
                     stringBuilder.Clear();
                     int index = 0;
 
@@ -49,23 +44,22 @@ namespace myBacklog.Models
                     }
 
                     // Instantiate a NamedColor object.
-                    Color color = (Color)fieldInfo.GetValue(null);
+                    Color color = (Color)propInfo.GetValue(null);
 
                     NamedColor namedColor = new NamedColor
                     {
-                        Name = name,
-                        FriendlyName = stringBuilder.ToString(),
+                        Name = stringBuilder.ToString(),
                         Color = color,
-                        RgbDisplay = String.Format("{0:X2}-{1:X2}-{2:X2}",
-                                                   (int)(255 * color.R),
-                                                   (int)(255 * color.G),
-                                                   (int)(255 * color.B))
                     };
 
                     // Add it to the collection.
                     all.Add(namedColor);
                 }
             }
+
+            var transparent = all.FirstOrDefault(x => x.Name == "Transparent");
+
+            all.Remove(transparent);
             all.TrimExcess();
             All = all;
         }
