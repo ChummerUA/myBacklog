@@ -30,9 +30,24 @@ namespace myBacklog.Views
             {
                 ViewModel = new SetCategoryViewModel();
             }
+
+            if (ViewModel.IsNewCategory)
+            {
+                CategoryNameEntry.Placeholder = "New category";
+                Title = "New category";
+            }
+            else
+            {
+                Title = ViewModel.CategoryName;
+            }
+
             BindingContext = ViewModel;
 
-            ConfirmCommand = new Command(ConfirmCategory);
+            ConfirmCommand = new Command(async () => await ConfirmCategoryAsync());
+
+            var item = Resources["ConfirmButton"] as ToolbarItem;
+            item.Command = ConfirmCommand;
+            Resources["ConfirmButton"] = item;
 
             ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
 		}
@@ -59,7 +74,7 @@ namespace myBacklog.Views
 
         private void ColorsListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
-            if(e.SelectedItem != null)
+            if (e.SelectedItem != null)
             {
                 var color = e.SelectedItem as NamedColor;
 
@@ -67,8 +82,15 @@ namespace myBacklog.Views
 
                 MainContent.IsVisible = true;
                 ColorsListView.IsVisible = false;
-                
-                Title = ViewModel.CategoryName;
+
+                if (ViewModel.IsNewCategory)
+                {
+                    Title = "New category";
+                }
+                else
+                {
+                    Title = ViewModel.CategoryName;
+                }
 
                 ViewModel.States[ViewModel.SelectedState.ID] = ViewModel.SelectedState;
 
@@ -77,11 +99,32 @@ namespace myBacklog.Views
             ColorsListView.SelectedItem = null;
         }
 
-        private void ConfirmCategory()
+        private async Task ConfirmCategoryAsync()
         {
-            //To do
-        }
+            if(ViewModel.CategoryName == "" || ViewModel.States.Count == 0)
+            {
+                return;
+            }
 
+            var categoriesPage = Navigation.NavigationStack[0] as CategoriesPage;
+            var category = new CategoryModel
+            {
+                CategoryName = ViewModel.CategoryName,
+                ID = ViewModel.ID,
+                States = ViewModel.States.ToList<StateModel>()
+            };
+
+            if (ViewModel.IsNewCategory)
+            {
+                categoriesPage.ViewModel.Categories.Add(category);
+            }
+            else
+            {
+                categoriesPage.ViewModel.Categories[category.ID] = category;
+            }
+            await Navigation.PopAsync();
+        }
+        
         protected override bool OnBackButtonPressed()
         {
             if(Title == "Choose color")
@@ -91,7 +134,7 @@ namespace myBacklog.Views
 
                 ViewModel.SelectedState = null;
 
-                if (ViewModel.CategoryName != "")
+                if (ViewModel.IsNewCategory)
                 {
                     Title = "New category";
                 }

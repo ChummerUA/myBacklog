@@ -12,7 +12,7 @@ namespace myBacklog
         {
             InitializeComponent();
 
-            MainPage = new NavigationPage(new SetCategoryPage());
+            MainPage = new NavigationPage(new CategoriesPage(new ViewModels.CategoriesViewModel()));
         }
 
         protected override void OnStart()

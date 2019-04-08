@@ -3,9 +3,51 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="myBacklog.Views.CategoriesPage"
              xmlns:ViewModels="clr-namespace:myBacklog.ViewModels"
-             Title="Backlog">
+             Title="Backlog"
+             x:Name="Page">
+    <ContentPage.Resources>
+        <Style x:Key="CategoryStyle" TargetType="StackLayout">
+            <Setter Property="Orientation" Value="Horizontal"/>
+        </Style>
+        <Style x:Key="LabelStyle" TargetType="Label">
+            <Setter Property="VerticalOptions" Value="CenterAndExpand"/>
+            <Setter Property="HorizontalOptions" Value="StartAndExpand"/>
+            <Setter Property="FontSize" Value="Large"/>
+            <Setter Property="Margin" Value="10,0,0,0"/>
+            <Setter Property="Text" Value="{Binding CategoryName}"/>
+        </Style>
+        <Style x:Key="ButtonStyle" TargetType="ImageButton">
+            <Setter Property="Source" Value="add"/>
+            <Setter Property="WidthRequest" Value="50"/>
+            <Setter Property="HeightRequest" Value="50"/>
+            <Setter Property="VerticalOptions" Value="EndAndExpand"/>
+            <Setter Property="HorizontalOptions" Value="CenterAndExpand"/>
+            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="BackgroundColor" Value="Transparent"/>
+            <!--<Setter Property="Command" Value="{Binding Path = BindingContext.CreateCategoryCommand, Source ={x:Reference Page}}"/>-->
+            <!--<Setter Property="Command" Value="{Binding CreateCategoryCommand}"/>-->
+        </Style>
+    </ContentPage.Resources>
     <ContentPage.Content>
-        <StackLayout>
-        </StackLayout>
+        <Grid>
+            <StackLayout>
+                <ListView x:Name="CategoriesListView"
+                          ItemsSource="{Binding Categories}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <ViewCell>
+                                <ViewCell.View>
+                                    <StackLayout Style="{StaticResource CategoryStyle}">
+                                        <Label Style="{StaticResource LabelStyle}"/>
+                                    </StackLayout>
+                                </ViewCell.View>
+                            </ViewCell>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackLayout>
+            <ImageButton Style="{StaticResource ButtonStyle}"
+                         x:Name="AddCategoryButton"/>
+        </Grid>
     </ContentPage.Content>
 </ContentPage>

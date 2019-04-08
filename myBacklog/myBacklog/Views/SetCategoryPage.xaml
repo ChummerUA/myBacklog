@@ -4,8 +4,7 @@
              xmlns:viewmodels="clr-namespace:myBacklog.ViewModels"
              xmlns:behaviors="clr-namespace:myBacklog.Behaviors"
              x:Class="myBacklog.Views.SetCategoryPage"
-             x:Name="Page"
-             Title="{Binding CategoryName}">
+             x:Name="Page">
     <ContentPage.Resources>
         <Style x:Key="LabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="Large"/>
@@ -19,7 +18,6 @@
         </Style>
         <Style x:Key="FillEntryStyle" BasedOn="EntryStyle" TargetType="Entry">
             <Setter Property="Margin" Value="10,0,10,0"/>
-            <Setter Property="Placeholder" Value="New state"/>
             <Setter Property="ReturnCommand" Value="{Binding NewStateCommand}"/>
             <Setter Property="ReturnCommandParameter" Value="{Binding Source={x:Reference NewStateEntry}, Path=Text}"/>
         </Style>
@@ -63,7 +61,7 @@
         </Style>
         <ToolbarItem x:Key="ConfirmButton"
                      Icon="confirm"
-                     Command="{Binding ConfirmCommand}"/>
+                     Command="{Binding Source={x:Reference Page}, Path=ConfirmCommand}"/>
     </ContentPage.Resources>
     <ContentPage.Content>
         <ScrollView>
@@ -73,7 +71,8 @@
                         <Label Style="{StaticResource LabelStyle}"
                                Text="Name"/>
                         <Entry Style="{StaticResource FillEntryStyle}"
-                               Placeholder="{Binding CategoryName}"/>
+                               Text="{Binding CategoryName}"
+                               x:Name="CategoryNameEntry"/>
                     </StackLayout>
                     <StackLayout>
                         <Label Style="{StaticResource LabelStyle}"
@@ -100,7 +99,8 @@
                         </StackLayout>
                         <StackLayout x:Name="NewStateStackLayout">
                             <Entry x:Name="NewStateEntry" 
-                                   Style="{StaticResource FillEntryStyle}">
+                                   Style="{StaticResource FillEntryStyle}"
+                                   Placeholder="New state">
                                 <Entry.Behaviors>
                                     <behaviors:StateEntryBehavior/>
                                 </Entry.Behaviors>

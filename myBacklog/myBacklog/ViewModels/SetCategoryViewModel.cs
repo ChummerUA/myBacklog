@@ -34,6 +34,8 @@ namespace myBacklog.ViewModels
         public StateModel SelectedState { get; set; }
 
         public List<NamedColor> Colors { get; set; }
+
+        public bool IsNewCategory { get; set; }
         #endregion
 
         #region ICommand
@@ -54,12 +56,14 @@ namespace myBacklog.ViewModels
                 {
                     States.Add(state);
                 }
+                IsNewCategory = false;
             }
             else
             {
                 ID = 0;
-                CategoryName = "New category";
+                CategoryName = "";
                 States = new ObservableCollection<StateModel>();
+                IsNewCategory = true;
             }
 
 
