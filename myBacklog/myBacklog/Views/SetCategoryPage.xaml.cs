@@ -2,8 +2,10 @@
 using myBacklog.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Xamarin.Forms;
@@ -35,10 +37,11 @@ namespace myBacklog.Views
             {
                 CategoryNameEntry.Placeholder = "New category";
                 Title = "New category";
+                ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
             }
             else
             {
-                Title = ViewModel.CategoryName;
+                Title = ViewModel.Category.CategoryName;
             }
 
             BindingContext = ViewModel;
@@ -48,107 +51,125 @@ namespace myBacklog.Views
             var item = Resources["ConfirmButton"] as ToolbarItem;
             item.Command = ConfirmCommand;
             Resources["ConfirmButton"] = item;
-
-            ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
 		}
-
-        private void ColorBox_Tapped(object sender, EventArgs e)
-        {
-            MainContent.IsVisible = false;
-            ColorsListView.IsVisible = true;
-
-            var selectedColor = ViewModel.SelectedState.Color;
-            var color = ViewModel.Colors.FirstOrDefault(x => x.Color.A == selectedColor.A
-            && x.Color.B == selectedColor.B
-            && x.Color.G == selectedColor.G
-            && x.Color.R == selectedColor.R);
-            var gray = System.Drawing.Color.Gray;
-
-            if (!Color.Equals(color.Color, gray))
-            {
-                ColorsListView.ScrollTo(color, ScrollToPosition.Center, false);
-            }
-            Title = "Choose color";
-            ToolbarItems.Remove(Resources["ConfirmButton"] as ToolbarItem);
-        }
-
-        private void ColorsListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
-        {
-            if (e.SelectedItem != null)
-            {
-                var color = e.SelectedItem as NamedColor;
-
-                ViewModel.SelectedState.Color = color.Color;
-
-                MainContent.IsVisible = true;
-                ColorsListView.IsVisible = false;
-
-                if (ViewModel.IsNewCategory)
-                {
-                    Title = "New category";
-                }
-                else
-                {
-                    Title = ViewModel.CategoryName;
-                }
-
-                ViewModel.States[ViewModel.SelectedState.ID] = ViewModel.SelectedState;
-
-                ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
-            }
-            ColorsListView.SelectedItem = null;
-        }
-
+        
         private async Task ConfirmCategoryAsync()
         {
-            if(ViewModel.CategoryName == "" || ViewModel.States.Count == 0)
+            var category = ViewModel.Category;
+
+            Regex regex = new Regex(@"[\w\s]+");
+            if (!regex.Match(category.CategoryName).Success)
+            {
+                return;
+            }
+
+            if(category.States.Count == 0)
             {
                 return;
             }
 
             var categoriesPage = Navigation.NavigationStack[0] as CategoriesPage;
-            var category = new CategoryModel
-            {
-                CategoryName = ViewModel.CategoryName,
-                ID = ViewModel.ID,
-                States = ViewModel.States.ToList<StateModel>()
-            };
 
             if (ViewModel.IsNewCategory)
             {
+                if(categoriesPage.ViewModel.Categories.FirstOrDefault(x => x.CategoryName == category.CategoryName) != null)
+                {
+                    return;
+                }
+
                 categoriesPage.ViewModel.Categories.Add(category);
             }
             else
             {
+                if(categoriesPage.ViewModel.Categories.FirstOrDefault(x => x.CategoryName == category.CategoryName && x.ID != category.ID) != null)
+                {
+                    return;
+                }
+
                 categoriesPage.ViewModel.Categories[category.ID] = category;
             }
             await Navigation.PopAsync();
         }
-        
-        protected override bool OnBackButtonPressed()
+
+        private void NewStateEntry_Completed(object sender, EventArgs e)
         {
-            if(Title == "Choose color")
+            NewStateEntry.Text = "";
+        }
+
+        private void NewStateEntry_Unfocused(object sender, FocusEventArgs e)
+        {
+            var entry = sender as Entry;
+            if (ViewModel.NewStateCommand.CanExecute(entry.Text))
             {
-                MainContent.IsVisible = true;
-                ColorsListView.IsVisible = false;
+                ViewModel.NewStateCommand.Execute(entry.Text);
+                entry.Text = "";
+            }
+            else if(entry.Text != "")
+            {
+                entry.Focus();
+            }
+        }
 
-                ViewModel.SelectedState = null;
+        private void StateEntry_Focused(object sender, EventArgs e)
+        {
+            var entry = sender as Entry;
+            var state = entry.BindingContext as StateModel;
 
-                if (ViewModel.IsNewCategory)
-                {
-                    Title = "New category";
-                }
-                else
-                {
-                    Title = ViewModel.CategoryName;
-                }
+            ViewModel.EditState = ViewModel.Category.States.FirstOrDefault(x => x.ID == state.ID);
+        }
 
-                ToolbarItems.Add(Resources["ConfirmButton"] as ToolbarItem);
+        private void StateEntry_Unfocused(object sender, EventArgs e)
+        {
+            var entry = sender as Entry;
+            if (ViewModel.SetStateNameCommand.CanExecute(entry.Text))
+            {
+                ViewModel.EditState = null;
+            }
+            else
+            {
+                entry.Focus();
+            }
+        }
 
-                return true;
+        private void StateEntry_Completed(object sender, EventArgs e)
+        {
+            var entry = sender as Entry;
+            if (ViewModel.SetStateNameCommand.CanExecute(entry.Text))
+            {
+                ViewModel.SetStateNameCommand.Execute(entry.Text);
+            }
+            else
+            {
+                entry.Focus();
+            }
+        }
+
+        private async void ColorBox_Tapped(object sender, EventArgs e)
+        {
+            var colors = new List<System.Drawing.Color>();
+            foreach(var state in ViewModel.Category.States)
+            {
+                colors.Add(state.Color);
             }
 
-            return base.OnBackButtonPressed();
+            var namedColors = new ObservableCollection<NamedColor>();
+            foreach(var color in colors)
+            {
+                namedColors.Add(NamedColor.All.FirstOrDefault(x => x.Color.A == color.A &&
+                x.Color.B == color.B &&
+                x.Color.G == color.B &&
+                x.Color.R == color.R));
+            }
+
+            var selectedColor = ViewModel.EditState.Color;
+            var namedColor = NamedColor.All.FirstOrDefault(x => x.Color.A == selectedColor.A &&
+            x.Color.B == selectedColor.B &&
+            x.Color.G == selectedColor.G && 
+            x.Color.R == selectedColor.R);
+
+            var viewModel = new SetColorViewModel(namedColors, namedColor);
+
+            await Navigation.PushAsync(new SetColorPage(viewModel));
         }
     }
 }

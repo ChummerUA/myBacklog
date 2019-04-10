@@ -15,11 +15,10 @@
             <Setter Property="FontSize" Value="Medium"/>
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
             <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
-        </Style>
-        <Style x:Key="FillEntryStyle" BasedOn="EntryStyle" TargetType="Entry">
             <Setter Property="Margin" Value="10,0,10,0"/>
-            <Setter Property="ReturnCommand" Value="{Binding NewStateCommand}"/>
-            <Setter Property="ReturnCommandParameter" Value="{Binding Source={x:Reference NewStateEntry}, Path=Text}"/>
+        </Style>
+        <Style x:Key="NewStateStyle" BasedOn="{StaticResource EntryStyle}" TargetType="Entry">
+            <Setter Property="Placeholder" Value="New state"/>
         </Style>
         <Style x:Key="StatesStyle" TargetType="StackLayout">
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
@@ -32,6 +31,7 @@
             <Setter Property="VerticalOptions" Value="CenterAndExpand"/>
             <Setter Property="HorizontalOptions" Value="Start"/>
             <Setter Property="Margin" Value="10,0,0,0"/>
+            <Setter Property="BackgroundColor" Value="{Binding Color, Mode=TwoWay}"/>
         </Style>
         <Style x:Key="DeleteButton" TargetType="ImageButton">
             <Setter Property="Source" Value="delete"/>
@@ -44,88 +44,52 @@
             <Setter Property="Command" Value="{Binding Path=BindingContext.RemoveCommand, Source={x:Reference Name=Page}}"/>
             <Setter Property="CommandParameter" Value="{Binding .}"/>
         </Style>
-        <Style x:Key="ColorsListStyle" TargetType="ListView">
-            <Setter Property="IsVisible" Value="False"/>
-            <Setter Property="ItemsSource" Value="{Binding Colors}"/>
-        </Style>
-        <Style x:Key="ColorsStyle" TargetType="StackLayout">
-            <Setter Property="VerticalOptions" Value="FillAndExpand"/>
-            <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
-            <Setter Property="Orientation" Value="Horizontal"/>
-        </Style>
-        <Style x:Key="ColorLabelStyle" TargetType="Label">
-            <Setter Property="VerticalOptions" Value="Center"/>
-            <Setter Property="HorizontalOptions" Value="StartAndExpand"/>
-            <Setter Property="Margin" Value="5,0,0,0"/>
-            <Setter Property="FontSize" Value="Medium"/>
-        </Style>
         <ToolbarItem x:Key="ConfirmButton"
                      Icon="confirm"
                      Command="{Binding Source={x:Reference Page}, Path=ConfirmCommand}"/>
     </ContentPage.Resources>
     <ContentPage.Content>
         <ScrollView>
-            <StackLayout>
-                <StackLayout x:Name="MainContent">
-                    <StackLayout>
-                        <Label Style="{StaticResource LabelStyle}"
-                               Text="Name"/>
-                        <Entry Style="{StaticResource FillEntryStyle}"
-                               Text="{Binding CategoryName}"
-                               x:Name="CategoryNameEntry"/>
-                    </StackLayout>
-                    <StackLayout>
-                        <Label Style="{StaticResource LabelStyle}"
-                               Text="States"/>
-                        <StackLayout x:Name="StatesListView"
-                                     BindableLayout.ItemsSource="{Binding States, Mode=TwoWay}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate>
-                                    <StackLayout Style="{StaticResource StatesStyle}">
-                                        <BoxView BackgroundColor="{Binding Color, Mode=TwoWay}"
-                                                 Style="{StaticResource StateColor}">
-                                            <BoxView.GestureRecognizers>
-                                                <TapGestureRecognizer Command="{Binding Path=BindingContext.ChooseColorCommand, Source={x:Reference Name=Page}}"
-                                                                      CommandParameter="{Binding .}"
-                                                                      Tapped="ColorBox_Tapped"/>
-                                            </BoxView.GestureRecognizers>
-                                        </BoxView>
-                                        <Entry Style="{StaticResource EntryStyle}"
-                                               Text="{Binding StateName}"/>
-                                        <ImageButton Style="{StaticResource DeleteButton}"/>
-                                    </StackLayout>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </StackLayout>
-                        <StackLayout x:Name="NewStateStackLayout">
-                            <Entry x:Name="NewStateEntry" 
-                                   Style="{StaticResource FillEntryStyle}"
-                                   Placeholder="New state">
-                                <Entry.Behaviors>
-                                    <behaviors:StateEntryBehavior/>
-                                </Entry.Behaviors>
-                            </Entry>
-                        </StackLayout>
-                    </StackLayout>
+            <StackLayout x:Name="MainContent">
+                <StackLayout>
+                    <Label Style="{StaticResource LabelStyle}"
+                           Text="Name"/>
+                    <Entry x:Name="CategoryNameEntry"
+                           Style="{StaticResource EntryStyle}"
+                           Text="{Binding Category.CategoryName}"/>
                 </StackLayout>
-                <ListView x:Name="ColorsListView"
-                          Style="{StaticResource ColorsListStyle}"
-                          ItemSelected="ColorsListView_ItemSelected">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <ViewCell>
-                                <ViewCell.View>
-                                    <StackLayout Style="{StaticResource ColorsStyle}">
-                                        <BoxView Style="{StaticResource StateColor}"
-                                                 BackgroundColor="{Binding Color}"/>
-                                        <Label Style="{StaticResource ColorLabelStyle}"
-                                               Text="{Binding Name}"/>
-                                    </StackLayout>
-                                </ViewCell.View>
-                            </ViewCell>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+                <StackLayout>
+                    <Label Style="{StaticResource LabelStyle}"
+                           Text="States"/>
+                    <StackLayout x:Name="StatesListView"
+                                 BindableLayout.ItemsSource="{Binding Category.States, Mode=TwoWay}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <StackLayout Style="{StaticResource StatesStyle}">
+                                    <BoxView Style="{StaticResource StateColor}">
+                                        <BoxView.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding Path=BindingContext.ChooseColorCommand, Source={x:Reference Name=Page}}"
+                                                                  CommandParameter="{Binding .}"
+                                                                  Tapped="ColorBox_Tapped"/>
+                                        </BoxView.GestureRecognizers>
+                                    </BoxView>
+                                    <Entry Style="{StaticResource EntryStyle}"
+                                           Text="{Binding StateName}"
+                                           Focused="StateEntry_Focused"
+                                           Unfocused="StateEntry_Unfocused"
+                                           Completed="StateEntry_Completed"/>
+                                    <ImageButton Style="{StaticResource DeleteButton}"/>
+                                </StackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </StackLayout>
+                    <Entry x:Name="NewStateEntry" 
+                            Style="{StaticResource NewStateStyle}"
+                            Text=""
+                            Completed="NewStateEntry_Completed"
+                            Unfocused="NewStateEntry_Unfocused">
+                    </Entry>
+                </StackLayout>
             </StackLayout>
         </ScrollView>
     </ContentPage.Content>

@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="myBacklog.Views.SetColorPage"
+             Title="Choose color">
+    <ContentPage.Resources>
+        <Style x:Key="ColorsListStyle" TargetType="ListView">
+            <Setter Property="ItemsSource" Value="{Binding Colors}"/>
+        </Style>
+        <Style x:Key="ColorStyle" TargetType="StackLayout">
+            <Setter Property="VerticalOptions" Value="FillAndExpand"/>
+            <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
+            <Setter Property="Orientation" Value="Horizontal"/>
+        </Style>
+        <Style x:Key="ColorLabelStyle" TargetType="Label">
+            <Setter Property="VerticalOptions" Value="Center"/>
+            <Setter Property="HorizontalOptions" Value="StartAndExpand"/>
+            <Setter Property="Margin" Value="5,0,0,0"/>
+            <Setter Property="FontSize" Value="Medium"/>
+        </Style>
+        <Style x:Key="ColorBoxStyle" TargetType="BoxView">
+            <Setter Property="WidthRequest" Value="30"/>
+            <Setter Property="HeightRequest" Value="30"/>
+            <Setter Property="VerticalOptions" Value="CenterAndExpand"/>
+            <Setter Property="HorizontalOptions" Value="Start"/>
+            <Setter Property="Margin" Value="10,0,0,0"/>
+            <Setter Property="BackgroundColor" Value="{Binding Color, Mode=TwoWay}"/>
+        </Style>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <StackLayout>
+            <ListView x:Name="ColorsListView"
+                      Style="{StaticResource ColorsListStyle}"
+                      ItemSelected="ColorsListView_ItemSelected">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <ViewCell.View>
+                                <StackLayout Style="{StaticResource ColorStyle}">
+                                    <BoxView Style="{StaticResource ColorBoxStyle}"
+                                             BackgroundColor="{Binding Color}"/>
+                                    <Label Style="{StaticResource ColorLabelStyle}"
+                                           Text="{Binding Name}"/>
+                                </StackLayout>
+                            </ViewCell.View>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

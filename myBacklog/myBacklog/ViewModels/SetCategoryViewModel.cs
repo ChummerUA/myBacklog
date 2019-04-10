@@ -1,8 +1,10 @@
-﻿using myBacklog.Models;
+﻿using myBacklog.Commands;
+using myBacklog.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using System.Windows.Input;
 using Xamarin.Forms;
@@ -25,21 +27,16 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Properties
-        public int ID { get; set; }
+        public CategoryModel Category { get; set; }
 
-        public string CategoryName { get; set; }
-
-        public ObservableCollection<StateModel> States { get; set; }
-
-        public StateModel SelectedState { get; set; }
-
-        public List<NamedColor> Colors { get; set; }
+        public StateModel EditState { get; set; }
 
         public bool IsNewCategory { get; set; }
         #endregion
 
         #region ICommand
         public ICommand NewStateCommand { get; }
+        public ICommand SetStateNameCommand { get; }
         public ICommand RemoveCommand { get; }
         public ICommand ChooseColorCommand { get; }
         public ICommand ConfirmColorCommand { get; }
@@ -49,58 +46,59 @@ namespace myBacklog.ViewModels
         {
             if(category != null)
             {
-                ID = category.ID;
-                CategoryName = category.CategoryName;
-                
-                foreach(var state in category.States)
-                {
-                    States.Add(state);
-                }
+                Category = category;
                 IsNewCategory = false;
             }
             else
             {
-                ID = 0;
-                CategoryName = "";
-                States = new ObservableCollection<StateModel>();
+                Category = new CategoryModel
+                {
+                    ID = 0,
+                    CategoryName = "",
+                    States = new ObservableCollection<StateModel>()
+                };
                 IsNewCategory = true;
             }
 
-
-            NewStateCommand = new Command<string>(CreateNewState);
+            NewStateCommand = new NewStateCommand(this);
+            SetStateNameCommand = new SetStateNameCommand(this);
             RemoveCommand = new Command<StateModel>(RemoveState);
             ChooseColorCommand = new Command<StateModel>(ChooseColor);
-            ConfirmColorCommand = new Command<Color>(ConfirmColor);
-
-            Colors = NamedColor.All;
+            ConfirmColorCommand = new Command<System.Drawing.Color>(ConfirmColor);
         }
 
-        private void CreateNewState(string name)
+        public void CreateNewState(string name)
         {
-            StateModel state = new StateModel
+            StateModel newState = new StateModel
             {
                 StateName = name,
-                ID = States.Count,
+                ID = Category.States.Count,
                 Color = Color.Gray
             };
-            States.Add(state);
-            OnPropertyChanged("States");
+            Category.States.Add(newState);
+        }
+
+        public void SetStateName(StateModel state)
+        {
+            Category.States[state.ID] = state;
+            EditState = null;
         }
 
         private void RemoveState(StateModel state)
         {
-            States.Remove(state);
+            Category.States.Remove(state);
         }
 
         private void ChooseColor(StateModel state)
         {
-            SelectedState = state;
+            EditState = state;
         }
 
-        private void ConfirmColor(Color color)
+        private void ConfirmColor(System.Drawing.Color color)
         {
-            SelectedState.Color = color;
-            SelectedState = null;
+            EditState.Color = color;
+            Category.States[EditState.ID] = EditState;
+            EditState = null;
         }
     }
 }
