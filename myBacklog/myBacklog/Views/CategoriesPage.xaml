@@ -24,8 +24,7 @@
             <Setter Property="HorizontalOptions" Value="CenterAndExpand"/>
             <Setter Property="Margin" Value="0,0,0,10"/>
             <Setter Property="BackgroundColor" Value="Transparent"/>
-            <!--<Setter Property="Command" Value="{Binding Path = BindingContext.CreateCategoryCommand, Source ={x:Reference Page}}"/>-->
-            <!--<Setter Property="Command" Value="{Binding CreateCategoryCommand}"/>-->
+            <!--<Setter Property="Command" Value="{Binding Source={x:Reference Page}, Path=CreateCategoryCommand}"/>-->
         </Style>
     </ContentPage.Resources>
     <ContentPage.Content>
@@ -36,6 +35,11 @@
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <ViewCell>
+                                <ViewCell.ContextActions>
+                                    <MenuItem Command="{Binding Path=SetCategoryCommand, Source={x:Reference Page}}"
+                                              CommandParameter="{Binding .}"
+                                              Text="SetCategory"/>
+                                </ViewCell.ContextActions>
                                 <ViewCell.View>
                                     <StackLayout Style="{StaticResource CategoryStyle}">
                                         <Label Style="{StaticResource LabelStyle}"/>
@@ -47,7 +51,8 @@
                 </ListView>
             </StackLayout>
             <ImageButton Style="{StaticResource ButtonStyle}"
-                         x:Name="AddCategoryButton"/>
+                         x:Name="AddCategoryButton"
+                         Command="{Binding Source={x:Reference Page}, Path=CreateCategoryCommand}"/>
         </Grid>
     </ContentPage.Content>
 </ContentPage>

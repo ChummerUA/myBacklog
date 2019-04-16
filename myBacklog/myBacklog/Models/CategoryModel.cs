@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SQLite;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -8,10 +9,14 @@ namespace myBacklog.Models
 {
     public class CategoryModel : INotifyPropertyChanged
     {
+        #region Variables
         private int id;
         private string categoryName;
         private ObservableCollection<StateModel> states;
+        private ObservableCollection<ItemModel> items;
+        #endregion
 
+        #region PropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void OnPropertyChanged(string name)
@@ -22,8 +27,10 @@ namespace myBacklog.Models
                 PropertyChanged(this, new PropertyChangedEventArgs(name));
             }
         }
+        #endregion
 
-        public int ID
+        [PrimaryKey, AutoIncrement]
+        public int CategoryID
         {
             get
             {
@@ -55,6 +62,7 @@ namespace myBacklog.Models
             }
         }
         
+        [Ignore]
         public ObservableCollection<StateModel> States
         {
             get
@@ -71,5 +79,21 @@ namespace myBacklog.Models
             }
         }
 
+        [Ignore]
+        public ObservableCollection<ItemModel> Items
+        {
+            get
+            {
+                return items;
+            }
+            set
+            {
+                if(value != items)
+                {
+                    items = value;
+                    OnPropertyChanged("Items");
+                }
+            }
+        }
     }
 }

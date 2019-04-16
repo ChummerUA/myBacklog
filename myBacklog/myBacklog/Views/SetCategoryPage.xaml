@@ -2,9 +2,9 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:myBacklog.ViewModels"
-             xmlns:behaviors="clr-namespace:myBacklog.Behaviors"
              x:Class="myBacklog.Views.SetCategoryPage"
-             x:Name="Page">
+             x:Name="Page"
+             Title="{Binding CategoryName}">
     <ContentPage.Resources>
         <Style x:Key="LabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="Large"/>
@@ -16,9 +16,19 @@
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
             <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
             <Setter Property="Margin" Value="10,0,10,0"/>
+            <!--<Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.SetCategoryNameCommand}"/>-->
+            <Setter Property="ReturnCommandParameter" Value="{Binding Source={x:Reference CategoryNameEntry}, Path=Text}"/>
+        </Style>
+        <Style x:Key="StateEntryStyle" TargetType="Entry" BasedOn="{StaticResource EntryStyle}">
+            <Setter Property="Text" Value="{Binding StateName}"/>
+            <Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.SetStateNameCommand}"/>
+            <Setter Property="ReturnCommandParameter" Value="{Binding .}"/>
         </Style>
         <Style x:Key="NewStateStyle" BasedOn="{StaticResource EntryStyle}" TargetType="Entry">
+            <Setter Property="Text" Value=""/>
             <Setter Property="Placeholder" Value="New state"/>
+            <Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.CreateStateCommand}"/>
+            <Setter Property="ReturnCommandParameter" Value="{Binding .}"/>
         </Style>
         <Style x:Key="StatesStyle" TargetType="StackLayout">
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
@@ -41,12 +51,11 @@
             <Setter Property="HorizontalOptions" Value="Start"/>
             <Setter Property="BackgroundColor" Value="Transparent"/>
             <Setter Property="Opacity" Value="0.6"/>
-            <Setter Property="Command" Value="{Binding Path=BindingContext.RemoveCommand, Source={x:Reference Name=Page}}"/>
+            <Setter Property="Command" Value="{Binding Path=BindingContext.RemoveStateCommand, Source={x:Reference Name=Page}}"/>
             <Setter Property="CommandParameter" Value="{Binding .}"/>
         </Style>
         <ToolbarItem x:Key="ConfirmButton"
-                     Icon="confirm"
-                     Command="{Binding Source={x:Reference Page}, Path=ConfirmCommand}"/>
+                     Icon="confirm"/>
     </ContentPage.Resources>
     <ContentPage.Content>
         <ScrollView>
@@ -56,7 +65,8 @@
                            Text="Name"/>
                     <Entry x:Name="CategoryNameEntry"
                            Style="{StaticResource EntryStyle}"
-                           Text="{Binding Category.CategoryName}"/>
+                           Text="{Binding Category.CategoryName}"
+                           TextChanged="Entry_TextChanged"/>
                 </StackLayout>
                 <StackLayout>
                     <Label Style="{StaticResource LabelStyle}"
@@ -73,21 +83,22 @@
                                                                   Tapped="ColorBox_Tapped"/>
                                         </BoxView.GestureRecognizers>
                                     </BoxView>
-                                    <Entry Style="{StaticResource EntryStyle}"
-                                           Text="{Binding StateName}"
+                                    <Entry Style="{StaticResource StateEntryStyle}"
                                            Focused="StateEntry_Focused"
                                            Unfocused="StateEntry_Unfocused"
-                                           Completed="StateEntry_Completed"/>
+                                           Completed="StateEntry_Completed"
+                                           TextChanged="StateEntry_TextChanged"/>
                                     <ImageButton Style="{StaticResource DeleteButton}"/>
                                 </StackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </StackLayout>
                     <Entry x:Name="NewStateEntry" 
-                            Style="{StaticResource NewStateStyle}"
-                            Text=""
-                            Completed="NewStateEntry_Completed"
-                            Unfocused="NewStateEntry_Unfocused">
+                           Style="{StaticResource NewStateStyle}"
+                           Text=""
+                           TextChanged="Entry_TextChanged"
+                           Completed="NewStateEntry_Completed"
+                           Unfocused="NewStateEntry_Unfocused">
                     </Entry>
                 </StackLayout>
             </StackLayout>

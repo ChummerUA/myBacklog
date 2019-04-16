@@ -17,27 +17,36 @@ namespace myBacklog.Views
         public CategoriesViewModel ViewModel { get; set; }
 
         public ICommand CreateCategoryCommand { get; }
+        public ICommand SetCategoryCommand { get; }
 
-		public CategoriesPage (CategoriesViewModel viewModel)
+		public CategoriesPage ()
 		{
 			InitializeComponent ();
 
-            ViewModel = viewModel;
+            ViewModel = new CategoriesViewModel();
             BindingContext = ViewModel;
 
-            CreateCategoryCommand = new Command(async () => await CreateCategoryAsync(), () => true);
+            CreateCategoryCommand = new Command(async () => await CreateCategoryAsync());
+            SetCategoryCommand = new Command<CategoryModel>(async (parameter) => await SetCategoryAsync(parameter));
 
             AddCategoryButton.Command = CreateCategoryCommand;
         }
 
-        private async Task CreateCategoryAsync()
+        protected override void OnAppearing()
         {
-            await Navigation.PushAsync(new SetCategoryPage());
+            base.OnAppearing();
+
+            ViewModel.UpdateCategoriesCommand.Execute(null);
         }
 
-        private async void CreateCategory_Clicked(object sender, EventArgs e)
+        private async Task CreateCategoryAsync()
         {
-            await Navigation.PushAsync(new SetCategoryPage());
+            await Navigation.PushAsync(new SetCategoryPage(null));
+        }
+
+        private async Task SetCategoryAsync(CategoryModel model)
+        {
+            await Navigation.PushAsync(new SetCategoryPage(model));
         }
 	}
 }

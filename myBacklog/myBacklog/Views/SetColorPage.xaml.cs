@@ -52,9 +52,7 @@ namespace myBacklog.Views
                 var page = Navigation.NavigationStack.FirstOrDefault(x => x.GetType() == typeof(SetCategoryPage)) as SetCategoryPage;
                 
                 page.ViewModel.ConfirmColorCommand.Execute(color);
-
-                ColorsListView.SelectedItem = null;
-
+                
                 await Navigation.PopAsync();
             }
         }
