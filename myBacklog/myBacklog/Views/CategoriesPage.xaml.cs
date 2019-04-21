@@ -2,6 +2,7 @@
 using myBacklog.ViewModels;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,6 @@ namespace myBacklog.Views
         public CategoriesViewModel ViewModel { get; set; }
 
         public ICommand CreateCategoryCommand { get; }
-        public ICommand SetCategoryCommand { get; }
 
 		public CategoriesPage ()
 		{
@@ -27,7 +27,6 @@ namespace myBacklog.Views
             BindingContext = ViewModel;
 
             CreateCategoryCommand = new Command(async () => await CreateCategoryAsync());
-            SetCategoryCommand = new Command<CategoryModel>(async (parameter) => await SetCategoryAsync(parameter));
 
             AddCategoryButton.Command = CreateCategoryCommand;
         }
@@ -41,12 +40,21 @@ namespace myBacklog.Views
 
         private async Task CreateCategoryAsync()
         {
-            await Navigation.PushAsync(new SetCategoryPage(null));
+            await Navigation.PushAsync(new SetCategoryPage(new SetCategoryViewModel()));
         }
 
-        private async Task SetCategoryAsync(CategoryModel model)
+        private async void OpenCategoryAsync(object sender, SelectedItemChangedEventArgs e) 
         {
-            await Navigation.PushAsync(new SetCategoryPage(model));
+            if(e.SelectedItem != null)
+            {
+                var category = e.SelectedItem as CategoryModel;
+
+                var viewModel = new ItemsViewModel(await App.Database.GetCategoryAsync(category.CategoryID));
+                var page = new ItemsPage(viewModel);
+                (sender as ListView).SelectedItem = null;
+
+                await Navigation.PushAsync(page);
+            }
         }
 	}
 }

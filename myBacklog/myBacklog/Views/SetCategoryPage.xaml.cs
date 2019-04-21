@@ -3,6 +3,7 @@ using myBacklog.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -14,31 +15,47 @@ using Xamarin.Forms.Xaml;
 namespace myBacklog.Views
 {
 	[XamlCompilation(XamlCompilationOptions.Compile)]
-	public partial class SetCategoryPage : ContentPage
+	public partial class SetCategoryPage : ContentPage, INotifyPropertyChanged
 	{
+        SetCategoryViewModel viewModel;
+
+        #region PropertyChanged
+        public PropertyChangedEventHandler PropertyChanged;
+
+        private void OnPropertyChanged(string name)
+        {
+            var changed = PropertyChanged;
+            if(changed != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(name));
+            }
+        }
+        #endregion
+
         public ICommand ConfirmCommand { get; }
 
-        public SetCategoryViewModel ViewModel { get; set; }
+        public SetCategoryViewModel ViewModel
+        {
+            get
+            {
+                return viewModel;
+            }
+            set
+            {
+                if(value != viewModel)
+                {
+                    viewModel = value;
+                    OnPropertyChanged("ViewModel");
+                }
+            }
+        }
 
-        public SetCategoryPage(CategoryModel category = null)
+        public SetCategoryPage(SetCategoryViewModel vm)
 		{
 			InitializeComponent ();
 
-            if (category == null)
-            {
-                ViewModel = new SetCategoryViewModel();
-            }
-            else
-            {
-                ViewModel = new SetCategoryViewModel(category);
-            }
-
-            ConfirmCommand = new Command(async () => await ConfirmAsync());
-
-            var item = Resources["ConfirmButton"] as ToolbarItem;
-            item.Command = ConfirmCommand;
-
-            ToolbarItems.Add(item);
+            ViewModel = vm;
+            BindingContext = ViewModel;
 
             if (ViewModel.IsNewCategory)
             {
@@ -48,26 +65,34 @@ namespace myBacklog.Views
             else
             {
                 Title = ViewModel.Category.CategoryName;
-                ViewModel.SetStatesCommand.Execute(null);
             }
 
-            CategoryNameEntry.ReturnCommand = ViewModel.SetCategoryNameCommand;
+            ConfirmCommand = new Command(execute: async () => await SaveAsync());
 
-            BindingContext = ViewModel;
-		}
+            var item = Resources["ToolbarItem"] as ToolbarItem;
+            item.Command = ConfirmCommand;
 
-        private async Task ConfirmAsync()
+            ToolbarItems.Add(item);
+        }
+
+        protected override void OnAppearing()
         {
-            if (CanConfirm())
+            base.OnAppearing();
+
+            if (!ViewModel.IsNewCategory)
             {
-                ViewModel.SaveCategoryCommand.Execute(null);
-                await Navigation.PopAsync();
+                ViewModel.GetCategoryCommand.Execute(null);
             }
         }
 
-        private bool CanConfirm()
+        private async Task SaveAsync()
         {
-            return ViewModel.SaveCategoryCommand.CanExecute(null);
+            if (ViewModel.SaveCategoryCommand.CanExecute(null))
+            {
+                ViewModel.SaveCategoryCommand.Execute(null);
+                
+                await Navigation.PopAsync();
+            }
         }
 
         #region NewStateEntry
@@ -75,9 +100,8 @@ namespace myBacklog.Views
         {
             var entry = sender as Entry;
 
-            if (ViewModel.CreateStateCommand.CanExecute(entry.Text))
+            if (entry.ReturnCommand.CanExecute(entry.Text))
             {
-                ViewModel.CreateStateCommand.Execute(entry.Text);
                 entry.Text = "";
             }
         }
@@ -86,14 +110,26 @@ namespace myBacklog.Views
         {
             var entry = sender as Entry;
             
-            if (ViewModel.CreateStateCommand.CanExecute(entry.Text))
+            entry.ReturnCommand.Execute(entry.Text);
+            entry.Text = "";
+        }
+
+        private void NewStateEntry_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var entry = sender as Entry;
+
+            if(entry.ReturnCommand == null)
             {
-                ViewModel.CreateStateCommand.Execute(entry.Text);
-                entry.Text = "";
+                return;
             }
-            else if(entry.Text != "")
+
+            if (!entry.ReturnCommand.CanExecute(e.NewTextValue))
             {
-                entry.Focus();
+                entry.TextColor = Color.Red;
+            }
+            else
+            {
+                entry.TextColor = Color.Default;
             }
         }
         #endregion
@@ -110,24 +146,16 @@ namespace myBacklog.Views
         private void StateEntry_Unfocused(object sender, EventArgs e)
         {
             var entry = sender as Entry;
-            if (ViewModel.SetStateNameCommand.CanExecute(entry.Text))
+            if (entry.ReturnCommand.CanExecute(entry.BindingContext))
             {
-                ViewModel.SetStateNameCommand.Execute(entry.Text);
-            }
-            else
-            {
-                entry.Focus();
+                entry.ReturnCommand.Execute(entry.BindingContext);
             }
         }
 
         private void StateEntry_Completed(object sender, EventArgs e)
         {
             var entry = sender as Entry;
-            if (ViewModel.SetStateNameCommand.CanExecute(entry.Text))
-            {
-                ViewModel.SetStateNameCommand.Execute(entry.Text);
-            }
-            else
+            if (!entry.ReturnCommand.CanExecute(entry.BindingContext))
             {
                 entry.Focus();
             }
@@ -136,6 +164,11 @@ namespace myBacklog.Views
         private void StateEntry_TextChanged(object sender, TextChangedEventArgs e)
         {
             var entry = sender as Entry;
+
+            if(entry.ReturnCommand == null)
+            {
+                return;
+            }
 
             if (!entry.ReturnCommand.CanExecute(entry.BindingContext))
             {
@@ -147,6 +180,25 @@ namespace myBacklog.Views
             }
         }
         #endregion
+
+        private void CategoryNameEntry_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var entry = sender as Entry;
+
+            if(entry.ReturnCommand == null)
+            {
+                return;
+            }
+
+            if (!entry.ReturnCommand.CanExecute(null))
+            {
+                entry.TextColor = Color.Red;
+            }
+            else
+            {
+                entry.TextColor = Color.Default;
+            }
+        }
 
         private async void ColorBox_Tapped(object sender, EventArgs e)
         {
@@ -165,29 +217,11 @@ namespace myBacklog.Views
                 x.Color.R == color.R));
             }
 
-            var selectedColor = ViewModel.EditState.Color;
-            var namedColor = NamedColor.All.FirstOrDefault(x => x.Color.A == selectedColor.A &&
-            x.Color.B == selectedColor.B &&
-            x.Color.G == selectedColor.G && 
-            x.Color.R == selectedColor.R);
+            var selectedColor = ViewModel.EditState.NamedColor;
 
-            var viewModel = new SetColorViewModel(namedColors, namedColor);
+            var viewModel = new SetColorViewModel(namedColors, selectedColor);
 
             await Navigation.PushAsync(new SetColorPage(viewModel));
-        }
-
-        private void Entry_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var entry = sender as Entry;
-
-            if (!entry.ReturnCommand.CanExecute(entry.Text))
-            {
-                entry.TextColor = Color.Red;
-            }
-            else
-            {
-                entry.TextColor = Color.Default;
-            }
         }
     }
 }

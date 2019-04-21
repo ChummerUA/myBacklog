@@ -2,6 +2,7 @@
 using SQLite;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,17 +23,19 @@ namespace myBacklog.Data
         }
 
         #region Category
-        public Task<bool> IsCategoryExist(string name)
+        public bool IsCategoryNameAwailable(CategoryModel category)
         {
-            var category = database.Table<CategoryModel>().FirstOrDefaultAsync(x => x.CategoryName == name).Result;
+            var categories = database.Table<CategoryModel>().Where(x => x.CategoryName == category.CategoryName &&
+            x.CategoryID != category.CategoryID)
+            .ToListAsync().GetAwaiter().GetResult();
 
-            if(category != null)
+            if(categories.Count != 1)
             {
-                return Task.FromResult(true);
+                return true;
             }
             else
             {
-                return Task.FromResult(false);
+                return false;
             }
         }
 
@@ -55,7 +58,11 @@ namespace myBacklog.Data
 
         public async Task<CategoryModel> GetCategoryAsync(int id)
         {
-            return await database.Table<CategoryModel>().ElementAtAsync(id);
+            var category = await database.Table<CategoryModel>().FirstOrDefaultAsync(x => x.CategoryID == id);
+            var states = await GetStatesAsync(id);
+            category.States = new ObservableCollection<StateModel>(states);
+
+            return category;
         }
 
         public async Task UpdateCategoryAsync(CategoryModel category)
@@ -82,13 +89,22 @@ namespace myBacklog.Data
 
         public async Task<List<StateModel>> GetStatesAsync(int categoryID)
         {
-            var states = await database.Table<StateModel>().Where(x => x.CategoryID == categoryID).ToListAsync();
+            var states = await database.Table<StateModel>().Where(x => x.CategoryID == categoryID).Take(30).ToListAsync();
+
+            var items = await GetItemsAsync(categoryID);
 
             for(int i = 0; i < states.Count; i++)
             {
-                string colorName = states[i].ColorName;
+                var stateItems = items.Where(x => x.StateID == states[i].StateID).ToList();
 
-                states[i].Color = System.Drawing.Color.FromName(colorName);
+                stateItems.Add(new ItemModel
+                {
+                    ItemName = "Test",
+                    StateID = states[i].StateID,
+                    NamedColor = states[i].NamedColor
+                });
+
+                states[i].Items = new ObservableCollection<ItemModel>(stateItems);
             }
 
             return states;

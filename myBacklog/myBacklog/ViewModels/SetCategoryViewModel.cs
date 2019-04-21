@@ -14,6 +14,8 @@ namespace myBacklog.ViewModels
 {
     public class SetCategoryViewModel : INotifyPropertyChanged
     {
+        CategoryModel category;
+
         #region PropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -28,7 +30,21 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Properties
-        public CategoryModel Category { get; set; }
+        public CategoryModel Category
+        {
+            get
+            {
+                return category;
+            }
+            set
+            {
+                if (category != value)
+                {
+                    category = value;
+                    OnPropertyChanged("Category");
+                }
+            }
+        }
 
         public StateModel EditState { get; set; }
 
@@ -36,49 +52,53 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region ICommand
-        public ICommand SetCategoryNameCommand { get; }
-        public ICommand SaveCategoryCommand { get; }
+        public ICommand SetCategoryNameCommand { get; private set; }
+        public ICommand SaveCategoryCommand { get; private set; }
 
-        public ICommand SetStatesCommand { get; }
-        public ICommand CreateStateCommand { get; }
-        public ICommand SetStateNameCommand { get; }
-        public ICommand RemoveStateCommand { get; }
+        public ICommand GetCategoryCommand { get; private set; }
 
-        public ICommand ChooseColorCommand { get; }
-        public ICommand ConfirmColorCommand { get; }
+        public ICommand CreateStateCommand { get; private set; }
+        public ICommand SetStateNameCommand { get; private set; }
+        public ICommand RemoveStateCommand { get; private set; }
+
+        public ICommand ChooseColorCommand { get; private set; }
+        public ICommand ConfirmColorCommand { get; private set; }
         #endregion
 
-        public SetCategoryViewModel(CategoryModel category = null)
+        public SetCategoryViewModel(CategoryModel category)
         {
-            if(category != null)
-            {
-                Category = category;
-                IsNewCategory = false;
-            }
-            else
-            {
-                Category = new CategoryModel
-                {
-                    CategoryName = "",
-                    States = new ObservableCollection<StateModel>()
-                };
-                IsNewCategory = true;
-            }
+            SetCommands();
+            Category = category;
+            IsNewCategory = false;
+        }
 
-            SaveCategoryCommand = new Command(execute: async() => await SaveCategoryAsync(),
+        public SetCategoryViewModel()
+        {
+            SetCommands();
+            Category = new CategoryModel
+            {
+                CategoryName = "",
+                States = new ObservableCollection<StateModel>()
+            };
+            IsNewCategory = true;
+        }
+
+        public void SetCommands()
+        {
+            SaveCategoryCommand = new Command(execute: async () => await SaveCategoryAsync(),
                 canExecute: CanSaveCategory);
-            SetCategoryNameCommand = new Command<string>(execute: async (parameter) => await SetCategoryNameAsync(parameter),
+            SetCategoryNameCommand = new Command(execute: SetCategoryName,
                 canExecute: CanSetCategoryName);
+            GetCategoryCommand = new Command(execute: async () => await GetCategoryAsync());
 
-            SetStatesCommand = new Command(async () => await SetStatesAsync());
-            CreateStateCommand = new Command<string>(execute: async (parameter) => await CreateStateAsync(parameter),
+            CreateStateCommand = new Command<string>(execute: (parameter) => CreateState(parameter),
                 canExecute: (parameter) => CanCreateState(parameter));
-            SetStateNameCommand = new Command<StateModel>(execute: async(parameter) => await SetStateNameAsync(parameter),
+            SetStateNameCommand = new Command<StateModel>(execute: (parameter) => SetStateName(parameter),
                 canExecute: (parameter) => CanSetStateName(parameter));
-            RemoveStateCommand = new Command<StateModel>(async (parameter) => await RemoveStateAsync(parameter));
+            RemoveStateCommand = new Command<StateModel>( (parameter) =>  RemoveState(parameter));
 
             ChooseColorCommand = new Command<StateModel>(ChooseColor);
-            ConfirmColorCommand = new Command<System.Drawing.Color>(async (parameter) => await ConfirmColorAsync(parameter));
+            ConfirmColorCommand = new Command<NamedColor>(async (parameter) => await ConfirmColorAsync(parameter));
         }
 
         #region Command.Execute()
@@ -98,15 +118,23 @@ namespace myBacklog.ViewModels
             }
         }
 
-        private async Task SetCategoryNameAsync(string name)
+        private async Task GetCategoryAsync()
         {
-            if (!CanSetCategoryName(name))
+            if (!IsNewCategory)
+            {
+                Category = await App.Database.GetCategoryAsync(Category.CategoryID);
+            }
+        }
+
+        private void SetCategoryName()
+        {
+            if (!CanSetCategoryName())
             {
                 return;
             }
         }
 
-        private async Task SetStatesAsync()
+        private async Task GetStatesAsync()
         {
             if (!IsNewCategory)
             {
@@ -116,7 +144,7 @@ namespace myBacklog.ViewModels
             }
         }
 
-        private async Task CreateStateAsync(string name)
+        private void CreateState(string name)
         {
             if (!CanCreateState(name))
             {
@@ -127,43 +155,29 @@ namespace myBacklog.ViewModels
             {
                 StateName = name,
                 StateID = Category.States.Count,
-                Color = Color.Gray,
+                NamedColor = NamedColor.All.FirstOrDefault(x => x.Name == "Gray"),
             };
 
             if (!IsNewCategory)
             {
                 state.CategoryID = Category.CategoryID;
             }
-            else
-            {
-                await App.Database.CreateStateAsync(state);
-            }
 
             Category.States.Add(state);
         }
 
-        private async Task SetStateNameAsync(StateModel state)
+        private void SetStateName(StateModel state)
         {
             if (!CanSetStateName(state))
             {
                 return;
             }
 
-            if (!IsNewCategory)
-            {
-                await App.Database.UpdateStateAsync(state);
-            }
-
             EditState = null;
         }
 
-        private async Task RemoveStateAsync(StateModel state)
+        private void RemoveState(StateModel state)
         {
-            if (!IsNewCategory)
-            {
-                await App.Database.DeleteStateAsync(state);
-            }
-
             Category.States.Remove(state);
         }
 
@@ -172,19 +186,22 @@ namespace myBacklog.ViewModels
             EditState = state;
         }
 
-        private async Task ConfirmColorAsync(Color color)
+        private async Task ConfirmColorAsync(NamedColor color)
         {
             if (!IsNewCategory)
             {
                 await App.Database.UpdateStateAsync(EditState);
             }
 
-            EditState.Color = color;
+            EditState.NamedColor = color;
 
             var state = Category.States.FirstOrDefault(x => x.StateID == EditState.StateID);
             var i = Category.States.IndexOf(state);
 
             Category.States[i] = EditState;
+
+            await App.Database.UpdateStateAsync(EditState);
+
             EditState = null;
         }
         #endregion
@@ -207,22 +224,26 @@ namespace myBacklog.ViewModels
                 return false;
             }
 
-            return true;
+            var isAwailable = App.Database.IsCategoryNameAwailable(Category);
+
+            return isAwailable;
         }
 
-        private bool CanSetCategoryName(string parameter)
+        private bool CanSetCategoryName()
         {
             var pattern = @"[\w\s]+";
             var regex = new Regex(pattern);
 
-            var match = regex.Match(parameter);
+            var match = regex.Match(Category.CategoryName);
 
-            if (match.Groups.Count != 1 || match.Groups[0].Length != parameter.Length)
+            if (match.Groups.Count != 1 || (match.Groups.Count == 1 && match.Groups[0].Length != Category.CategoryName.Length))
             {
                 return false;
             }
 
-            return true;
+            var isAwailable = App.Database.IsCategoryNameAwailable(Category);
+
+            return isAwailable;
         }
 
         private bool CanCreateState(string parameter)
@@ -232,7 +253,7 @@ namespace myBacklog.ViewModels
 
             var match = regex.Match(parameter);
 
-            if (match.Groups.Count != 1 || match.Groups[0].Length != parameter.Length)
+            if (match.Groups.Count != 1 || (match.Groups.Count == 1 && match.Groups[0].Length != parameter.Length))
             {
                 return false;
             }
@@ -252,7 +273,7 @@ namespace myBacklog.ViewModels
 
             var match = regex.Match(name);
 
-            if (match.Groups.Count != 1 || match.Groups[0].Length != name.Length)
+            if (match.Groups.Count != 1 || (match.Groups.Count == 1 && match.Groups[0].Length != name.Length))
             {
                 return false;
             }

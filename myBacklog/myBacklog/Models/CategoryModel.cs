@@ -13,7 +13,6 @@ namespace myBacklog.Models
         private int id;
         private string categoryName;
         private ObservableCollection<StateModel> states;
-        private ObservableCollection<ItemModel> items;
         #endregion
 
         #region PropertyChanged
@@ -75,23 +74,6 @@ namespace myBacklog.Models
                 {
                     states = value;
                     OnPropertyChanged("States");
-                }
-            }
-        }
-
-        [Ignore]
-        public ObservableCollection<ItemModel> Items
-        {
-            get
-            {
-                return items;
-            }
-            set
-            {
-                if(value != items)
-                {
-                    items = value;
-                    OnPropertyChanged("Items");
                 }
             }
         }

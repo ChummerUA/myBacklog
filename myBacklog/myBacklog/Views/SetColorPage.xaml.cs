@@ -48,10 +48,9 @@ namespace myBacklog.Views
         {
             if(e.SelectedItem != null)
             {
-                var color = (e.SelectedItem as NamedColor).Color;
                 var page = Navigation.NavigationStack.FirstOrDefault(x => x.GetType() == typeof(SetCategoryPage)) as SetCategoryPage;
                 
-                page.ViewModel.ConfirmColorCommand.Execute(color);
+                page.ViewModel.ConfirmColorCommand.Execute(e.SelectedItem);
                 
                 await Navigation.PopAsync();
             }

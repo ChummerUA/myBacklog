@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.Text;
 
 namespace myBacklog.Models
@@ -11,9 +12,9 @@ namespace myBacklog.Models
         #region Variables
         int itemID;
         string itemName;
-        StateModel state;
         int categoryID;
         int stateID;
+        NamedColor namedColor;
         #endregion
 
         #region PropertyChanged
@@ -62,23 +63,6 @@ namespace myBacklog.Models
             }
         }
         
-        [Ignore]
-        public StateModel State
-        {
-            get
-            {
-                return state;
-            }
-            set
-            {
-                if (state != value)
-                {
-                    state = value;
-                    OnPropertyChanged("State");
-                }
-            }
-        }
-
         public int CategoryID
         {
             get
@@ -108,6 +92,32 @@ namespace myBacklog.Models
                     stateID = value;
                     OnPropertyChanged("StateID");
                 }
+            }
+        }
+
+        [Ignore]
+        public NamedColor NamedColor
+        {
+            get
+            {
+                return namedColor;
+            }
+            set
+            {
+                if(namedColor != value)
+                {
+                    namedColor = value;
+                    OnPropertyChanged("NamedColor");
+                }
+            }
+        }
+
+        [Ignore]
+        public Color Color
+        {
+            get
+            {
+                return NamedColor.Color;
             }
         }
     }

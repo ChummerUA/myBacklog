@@ -3,8 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:myBacklog.ViewModels"
              x:Class="myBacklog.Views.SetCategoryPage"
-             x:Name="Page"
-             Title="{Binding CategoryName}">
+             x:Name="Page">
     <ContentPage.Resources>
         <Style x:Key="LabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="Large"/>
@@ -16,8 +15,7 @@
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
             <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
             <Setter Property="Margin" Value="10,0,10,0"/>
-            <!--<Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.SetCategoryNameCommand}"/>-->
-            <Setter Property="ReturnCommandParameter" Value="{Binding Source={x:Reference CategoryNameEntry}, Path=Text}"/>
+            <Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.SetCategoryNameCommand}"/>
         </Style>
         <Style x:Key="StateEntryStyle" TargetType="Entry" BasedOn="{StaticResource EntryStyle}">
             <Setter Property="Text" Value="{Binding StateName}"/>
@@ -28,7 +26,7 @@
             <Setter Property="Text" Value=""/>
             <Setter Property="Placeholder" Value="New state"/>
             <Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.CreateStateCommand}"/>
-            <Setter Property="ReturnCommandParameter" Value="{Binding .}"/>
+            <Setter Property="ReturnCommandParameter" Value="{Binding Source={x:Reference NewStateEntry}, Path=Text}"/>
         </Style>
         <Style x:Key="StatesStyle" TargetType="StackLayout">
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
@@ -54,7 +52,7 @@
             <Setter Property="Command" Value="{Binding Path=BindingContext.RemoveStateCommand, Source={x:Reference Name=Page}}"/>
             <Setter Property="CommandParameter" Value="{Binding .}"/>
         </Style>
-        <ToolbarItem x:Key="ConfirmButton"
+        <ToolbarItem x:Key="ToolbarItem"
                      Icon="confirm"/>
     </ContentPage.Resources>
     <ContentPage.Content>
@@ -65,8 +63,8 @@
                            Text="Name"/>
                     <Entry x:Name="CategoryNameEntry"
                            Style="{StaticResource EntryStyle}"
-                           Text="{Binding Category.CategoryName}"
-                           TextChanged="Entry_TextChanged"/>
+                           Text="{Binding Category.CategoryName, FallbackValue=''}"
+                           TextChanged="CategoryNameEntry_TextChanged"/>
                 </StackLayout>
                 <StackLayout>
                     <Label Style="{StaticResource LabelStyle}"
@@ -96,7 +94,7 @@
                     <Entry x:Name="NewStateEntry" 
                            Style="{StaticResource NewStateStyle}"
                            Text=""
-                           TextChanged="Entry_TextChanged"
+                           TextChanged="NewStateEntry_TextChanged"
                            Completed="NewStateEntry_Completed"
                            Unfocused="NewStateEntry_Unfocused">
                     </Entry>
