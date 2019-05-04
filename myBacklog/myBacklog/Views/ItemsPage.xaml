@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="myBacklog.Views.ItemsPage"
              x:Name="Page"
+             Visual="Material"
              Title="{Binding Source={x:Reference Page}, Path=BindingContext.Category.CategoryName}">
     <ContentPage.Resources>
         <Style x:Key="StateHeaderStyle" TargetType="Label">

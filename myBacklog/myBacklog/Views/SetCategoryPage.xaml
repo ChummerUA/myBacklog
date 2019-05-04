@@ -4,6 +4,7 @@
              xmlns:viewmodels="clr-namespace:myBacklog.ViewModels"
              x:Class="myBacklog.Views.SetCategoryPage"
              x:Name="Page"
+             Visual="Material"
              Title="{Binding Source={x:Reference CategoryNameEntry}, Path=Text}">
     <ContentPage.Resources>
         <Style x:Key="LabelStyle" TargetType="Label">
