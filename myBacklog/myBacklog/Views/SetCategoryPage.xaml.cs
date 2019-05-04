@@ -19,19 +19,6 @@ namespace myBacklog.Views
 	{
         SetCategoryViewModel viewModel;
 
-        #region PropertyChanged
-        public PropertyChangedEventHandler PropertyChanged;
-
-        private void OnPropertyChanged(string name)
-        {
-            var changed = PropertyChanged;
-            if(changed != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
-            }
-        }
-        #endregion
-
         public ICommand ConfirmCommand { get; }
 
         public SetCategoryViewModel ViewModel
@@ -64,24 +51,17 @@ namespace myBacklog.Views
             }
             else
             {
-                Title = ViewModel.Category.CategoryName;
+                ViewModel.GetCategoryCommand.Execute(null);
             }
 
             ConfirmCommand = new Command(execute: async () => await SaveAsync());
 
-            var item = Resources["ToolbarItem"] as ToolbarItem;
-            item.Command = ConfirmCommand;
-
-            ToolbarItems.Add(item);
-        }
-
-        protected override void OnAppearing()
-        {
-            base.OnAppearing();
-
-            if (!ViewModel.IsNewCategory)
+            if (ViewModel.IsNewCategory)
             {
-                ViewModel.GetCategoryCommand.Execute(null);
+                var item = Resources["ToolbarItem"] as ToolbarItem;
+                item.Command = ConfirmCommand;
+
+                ToolbarItems.Add(item);
             }
         }
 
@@ -90,7 +70,6 @@ namespace myBacklog.Views
             if (ViewModel.SaveCategoryCommand.CanExecute(null))
             {
                 ViewModel.SaveCategoryCommand.Execute(null);
-                
                 await Navigation.PopAsync();
             }
         }
@@ -140,15 +119,32 @@ namespace myBacklog.Views
             var entry = sender as Entry;
             var state = entry.BindingContext as StateModel;
 
-            ViewModel.EditState = ViewModel.Category.States.FirstOrDefault(x => x.StateID == state.StateID);
+            ViewModel.EditState = new StateModel
+            {
+                StateName = state.StateName,
+                NamedColor = state.NamedColor,
+            };
+            if(state.CategoryID != null)
+            {
+                ViewModel.EditState.CategoryID = state.CategoryID;
+            }
+            if(state.StateID != null)
+            {
+                ViewModel.EditState.StateID = state.StateID;
+            }
         }
 
         private void StateEntry_Unfocused(object sender, EventArgs e)
         {
             var entry = sender as Entry;
+
             if (entry.ReturnCommand.CanExecute(entry.BindingContext))
             {
                 entry.ReturnCommand.Execute(entry.BindingContext);
+            }
+            else
+            {
+                ViewModel.CancelChangesCommand.Execute(null);
             }
         }
 
@@ -181,6 +177,7 @@ namespace myBacklog.Views
         }
         #endregion
 
+        #region Category
         private void CategoryNameEntry_TextChanged(object sender, TextChangedEventArgs e)
         {
             var entry = sender as Entry;
@@ -200,10 +197,21 @@ namespace myBacklog.Views
             }
         }
 
+        private void CategoryNameEntry_Unfocused(object sender, FocusEventArgs e)
+        {
+            var entry = sender as Entry;
+
+            if (!entry.ReturnCommand.CanExecute(null))
+            {
+                ViewModel.CancelChangesCommand.Execute(null);
+            }
+        }
+        #endregion
+
         private async void ColorBox_Tapped(object sender, EventArgs e)
         {
             var colors = new List<System.Drawing.Color>();
-            foreach(var state in ViewModel.Category.States)
+            foreach(var state in ViewModel.States)
             {
                 colors.Add(state.Color);
             }

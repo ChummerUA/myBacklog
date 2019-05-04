@@ -10,11 +10,11 @@ namespace myBacklog.Models
     public class ItemModel : INotifyPropertyChanged
     {
         #region Variables
-        int itemID;
+        int? itemID;
         string itemName;
-        int categoryID;
-        int stateID;
-        NamedColor namedColor;
+        int? categoryID;
+        int? stateID;
+        StateModel state;
         #endregion
 
         #region PropertyChanged
@@ -31,7 +31,7 @@ namespace myBacklog.Models
         #endregion
 
         [PrimaryKey, AutoIncrement] 
-        public int ItemID
+        public int? ItemID
         {
             get
             {
@@ -63,7 +63,7 @@ namespace myBacklog.Models
             }
         }
         
-        public int CategoryID
+        public int? CategoryID
         {
             get
             {
@@ -79,7 +79,7 @@ namespace myBacklog.Models
             }
         }
 
-        public int StateID
+        public int? StateID
         {
             get
             {
@@ -96,28 +96,19 @@ namespace myBacklog.Models
         }
 
         [Ignore]
-        public NamedColor NamedColor
+        public StateModel State
         {
             get
             {
-                return namedColor;
+                return state;
             }
             set
             {
-                if(namedColor != value)
+                if(value != state)
                 {
-                    namedColor = value;
-                    OnPropertyChanged("NamedColor");
+                    state = value;
+                    OnPropertyChanged("State");
                 }
-            }
-        }
-
-        [Ignore]
-        public Color Color
-        {
-            get
-            {
-                return NamedColor.Color;
             }
         }
     }

@@ -10,9 +10,9 @@ namespace myBacklog.Models
     public class CategoryModel : INotifyPropertyChanged
     {
         #region Variables
-        private int id;
+        private int? id;
         private string categoryName;
-        private ObservableCollection<StateModel> states;
+        private ObservableCollection<ItemModel> items;
         #endregion
 
         #region PropertyChanged
@@ -29,7 +29,7 @@ namespace myBacklog.Models
         #endregion
 
         [PrimaryKey, AutoIncrement]
-        public int CategoryID
+        public int? CategoryID
         {
             get
             {
@@ -40,7 +40,7 @@ namespace myBacklog.Models
                 if(value != id)
                 {
                     id = value;
-                    OnPropertyChanged("ID");
+                    OnPropertyChanged("CategoryID");
                 }
             }
         }
@@ -62,18 +62,18 @@ namespace myBacklog.Models
         }
         
         [Ignore]
-        public ObservableCollection<StateModel> States
+        public ObservableCollection<ItemModel> Items
         {
             get
             {
-                return states;
+                return items;
             }
             set
             {
-                if(value != states)
+                if(value != items)
                 {
-                    states = value;
-                    OnPropertyChanged("States");
+                    items = value;
+                    OnPropertyChanged("Items");
                 }
             }
         }

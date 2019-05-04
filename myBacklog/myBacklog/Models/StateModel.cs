@@ -12,11 +12,10 @@ namespace myBacklog.Models
     public class StateModel : INotifyPropertyChanged
     {
         #region Variables
-        int stateID;
+        int? stateID;
         string stateName;
-        NamedColor color;
-        ObservableCollection<ItemModel> items;
-        int categoryID;
+        NamedColor namedColor;
+        int? categoryID;
         #endregion
 
         #region PropertyChanged
@@ -33,7 +32,7 @@ namespace myBacklog.Models
         #endregion
 
         [PrimaryKey, AutoIncrement]
-        public int StateID
+        public int? StateID
         {
             get
             {
@@ -66,7 +65,22 @@ namespace myBacklog.Models
         }
 
         [Ignore]
-        public NamedColor NamedColor { get; set; }
+        public NamedColor NamedColor
+        {
+            get
+            {
+                return namedColor;
+            }
+            set
+            {
+                if(value != namedColor)
+                {
+                    namedColor = value;
+                    OnPropertyChanged("NamedColor");
+                    OnPropertyChanged("Color");
+                }
+            }
+        }
 
         public string ColorName
         {
@@ -80,6 +94,7 @@ namespace myBacklog.Models
             }
         }
 
+        [Ignore]
         public Color Color
         {
             get
@@ -88,37 +103,7 @@ namespace myBacklog.Models
             }
         }
 
-        [Ignore]
-        public ObservableCollection<ItemModel> Items
-        {
-            get
-            {
-                return items;
-            }
-            set
-            {
-                if (value != items)
-                {
-                    items = value;
-                    OnPropertyChanged("Items");
-                }
-            }
-        }
-
-        [Ignore]
-        public bool IsShown
-        {
-            get
-            {
-                if(Items.Count > 0)
-                {
-                    return true;
-                }
-                return false;
-            }
-        }
-
-        public int CategoryID
+        public int? CategoryID
         {
             get
             {

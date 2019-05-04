@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:myBacklog.ViewModels"
              x:Class="myBacklog.Views.SetCategoryPage"
-             x:Name="Page">
+             x:Name="Page"
+             Title="{Binding Source={x:Reference CategoryNameEntry}, Path=Text}">
     <ContentPage.Resources>
         <Style x:Key="LabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="Large"/>
@@ -39,7 +40,7 @@
             <Setter Property="VerticalOptions" Value="CenterAndExpand"/>
             <Setter Property="HorizontalOptions" Value="Start"/>
             <Setter Property="Margin" Value="10,0,0,0"/>
-            <Setter Property="BackgroundColor" Value="{Binding Color, Mode=TwoWay}"/>
+            <Setter Property="BackgroundColor" Value="{Binding Color}"/>
         </Style>
         <Style x:Key="DeleteButton" TargetType="ImageButton">
             <Setter Property="Source" Value="delete"/>
@@ -64,13 +65,14 @@
                     <Entry x:Name="CategoryNameEntry"
                            Style="{StaticResource EntryStyle}"
                            Text="{Binding Category.CategoryName, FallbackValue=''}"
-                           TextChanged="CategoryNameEntry_TextChanged"/>
+                           TextChanged="CategoryNameEntry_TextChanged"
+                           Unfocused="CategoryNameEntry_Unfocused"/>
                 </StackLayout>
                 <StackLayout>
                     <Label Style="{StaticResource LabelStyle}"
                            Text="States"/>
                     <StackLayout x:Name="StatesListView"
-                                 BindableLayout.ItemsSource="{Binding Category.States, Mode=TwoWay}">
+                                 BindableLayout.ItemsSource="{Binding States, Mode=TwoWay}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate>
                                 <StackLayout Style="{StaticResource StatesStyle}">

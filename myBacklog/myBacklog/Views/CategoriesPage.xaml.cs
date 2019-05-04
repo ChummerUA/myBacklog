@@ -48,10 +48,11 @@ namespace myBacklog.Views
             if(e.SelectedItem != null)
             {
                 var category = e.SelectedItem as CategoryModel;
-
-                var viewModel = new ItemsViewModel(await App.Database.GetCategoryAsync(category.CategoryID));
-                var page = new ItemsPage(viewModel);
                 (sender as ListView).SelectedItem = null;
+
+                var viewModel = new ItemsViewModel(await App.Database.GetCategoryAsync((int)category.CategoryID));
+
+                var page = new ItemsPage(viewModel);
 
                 await Navigation.PushAsync(page);
             }
