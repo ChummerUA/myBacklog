@@ -36,6 +36,11 @@
             <Setter Property="Title" Value="Select state"/>
             <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
         </Style>
+        <Style x:Key="HiddenPickerStyle" TargetType="Picker">
+            <Setter Property="Title" Value="Select state"/>
+            <Setter Property="WidthRequest" Value="1"/>
+            <Setter Property="HeightRequest" Value="1"/>
+        </Style>
 
         <Style x:Key="SetItemStyle" TargetType="StackLayout">
             <Setter Property="VerticalOptions" Value="End"/>
@@ -155,7 +160,7 @@
             <Picker x:Name="StatePicker"
                     ItemsSource="{Binding Source={x:Reference Page}, Path=BindingContext.States}"
                     ItemDisplayBinding="{Binding StateName}"
-                    IsVisible="False"
+                    Style="{StaticResource HiddenPickerStyle}"
                     SelectedItem="{Binding Source={x:Reference Page}, Path=BindingContext.VisibleState}"/>
         </StackLayout>
     </ContentPage.Content>
