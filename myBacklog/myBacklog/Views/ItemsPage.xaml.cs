@@ -63,6 +63,7 @@ namespace myBacklog.Views
             SetToolbar();
         }
 
+        #region override Page events
         protected override void OnAppearing()
         {
             base.OnAppearing();
@@ -92,7 +93,20 @@ namespace myBacklog.Views
                 return false;
             }
         }
+        #endregion
 
+        private async Task CategorySettingsAsync()
+        {
+            var states = ViewModel.States.ToList();
+            states.RemoveAt(0);
+
+            var viewModel = new SetCategoryViewModel(ViewModel.Category, states);
+            var page = new SetCategoryPage(viewModel);
+
+            await Navigation.PushAsync(page);
+        }
+
+        #region Toolbar
         private void SetToolbar()
         {
             var settings = Resources["SettingsButton"] as ToolbarItem;
@@ -104,21 +118,12 @@ namespace myBacklog.Views
         {
             ToolbarItems.Clear();
         }
+        #endregion
 
+        #region Items settings
         private void CancelItem()
         {
             HideSetItemStack();
-        }
-
-        private async Task CategorySettingsAsync()
-        {
-            var states = ViewModel.States.ToList();
-            states.RemoveAt(0);
-
-            var viewModel = new SetCategoryViewModel(ViewModel.Category, states);
-            var page = new SetCategoryPage(viewModel);
-
-            await Navigation.PushAsync(page);
         }
 
         private void CreateNewItem()
@@ -213,7 +218,9 @@ namespace myBacklog.Views
                 entry.TextColor = Color.Default;
             }
         }
+        #endregion
 
+        #region ItemsListView
         private void ItemsListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
             var listView = sender as ListView;
@@ -238,5 +245,6 @@ namespace myBacklog.Views
                 ViewModel.LoadMoreCommand.Execute(null);
             }
         }
+        #endregion
     }
 }
