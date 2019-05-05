@@ -124,6 +124,7 @@ namespace myBacklog.Views
         private void CreateNewItem()
         {
             ViewModel.SetEditableItemCommand.Execute(null);
+            SetItemHeader.Text = "New";
             ShowSetItemStack();
         }
 
@@ -203,7 +204,7 @@ namespace myBacklog.Views
         {
             var entry = sender as Entry;
 
-            if (!entry.ReturnCommand.CanExecute(null))
+            if (!entry.ReturnCommand.CanExecute(null) && entry.Text != null && entry.Text != "")
             {
                 entry.TextColor = Color.Red;
             }
@@ -222,6 +223,7 @@ namespace myBacklog.Views
                 listView.SelectedItem = null;
 
                 ViewModel.SetEditableItemCommand.Execute(item);
+                SetItemHeader.Text = "Edit";
 
                 ShowSetItemStack();
             }

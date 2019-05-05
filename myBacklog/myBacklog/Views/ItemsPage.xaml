@@ -124,7 +124,8 @@
             <StackLayout x:Name="SetItemStack"
                          Style="{StaticResource SetItemStyle}">
                 <Grid>
-                    <Label Style="{StaticResource SetItemHeaderStyle}"/>
+                    <Label x:Name="SetItemHeader"
+                           Style="{StaticResource SetItemHeaderStyle}"/>
                     <ImageButton x:Name="CancelButton" 
                                  Style="{StaticResource CancelButtonStyle}"/>
                 </Grid>
