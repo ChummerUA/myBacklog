@@ -17,12 +17,14 @@
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
             <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
             <Setter Property="Margin" Value="10,0,10,0"/>
+            <Setter Property="BackgroundColor" Value="Transparent"/>
             <Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.SetCategoryNameCommand}"/>
         </Style>
         <Style x:Key="StateEntryStyle" TargetType="Entry" BasedOn="{StaticResource EntryStyle}">
             <Setter Property="Text" Value="{Binding StateName}"/>
             <Setter Property="ReturnCommand" Value="{Binding Source={x:Reference Page}, Path=BindingContext.SetStateNameCommand}"/>
             <Setter Property="ReturnCommandParameter" Value="{Binding .}"/>
+            <Setter Property="Visual" Value="Default"/>
         </Style>
         <Style x:Key="NewStateStyle" BasedOn="{StaticResource EntryStyle}" TargetType="Entry">
             <Setter Property="Text" Value=""/>
@@ -61,11 +63,10 @@
         <ScrollView>
             <StackLayout x:Name="MainContent">
                 <StackLayout>
-                    <Label Style="{StaticResource LabelStyle}"
-                           Text="Name"/>
                     <Entry x:Name="CategoryNameEntry"
                            Style="{StaticResource EntryStyle}"
                            Text="{Binding Category.CategoryName, FallbackValue=''}"
+                           Placeholder="Category name"
                            TextChanged="CategoryNameEntry_TextChanged"
                            Unfocused="CategoryNameEntry_Unfocused"/>
                 </StackLayout>

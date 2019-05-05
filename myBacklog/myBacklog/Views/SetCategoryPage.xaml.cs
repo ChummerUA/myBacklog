@@ -102,7 +102,7 @@ namespace myBacklog.Views
                 return;
             }
 
-            if (!entry.ReturnCommand.CanExecute(e.NewTextValue))
+            if (!entry.ReturnCommand.CanExecute(e.NewTextValue) && e.NewTextValue != "")
             {
                 entry.TextColor = Color.Red;
             }
