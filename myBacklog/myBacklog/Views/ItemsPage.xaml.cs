@@ -16,7 +16,10 @@ namespace myBacklog.Views
     [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class ItemsPage : ContentPage
     {
+        #region variables
         ItemsViewModel viewModel;
+        string panelType;
+        #endregion
 
         #region ICommand
         public ICommand CategorySettingsCommand { get; }
@@ -26,6 +29,7 @@ namespace myBacklog.Views
         public ICommand StatesCommand { get; }
         #endregion
 
+        #region Properties
         public ItemsViewModel ViewModel
         {
             get
@@ -43,6 +47,23 @@ namespace myBacklog.Views
         }
 
         public double ItemPanelHeight { get; set; }
+
+        public string PanelType
+        {
+            get
+            {
+                return panelType;
+            }
+            set
+            {
+                if(value != panelType)
+                {
+                    panelType = value;
+                    OnPropertyChanged("PanelType");
+                }
+            }
+        }
+        #endregion
 
         public ItemsPage(ItemsViewModel vm)
         {
@@ -124,7 +145,7 @@ namespace myBacklog.Views
         }
         #endregion
 
-        #region Items settings
+        #region Bottom panel
         private void CancelItem()
         {
             HideSetItemStack();
@@ -133,7 +154,7 @@ namespace myBacklog.Views
         private void CreateNewItem()
         {
             ViewModel.SetEditableItemCommand.Execute(null);
-            SetItemHeader.Text = "New";
+            PanelType = "New";
             ShowSetItemStack();
         }
 
@@ -163,14 +184,14 @@ namespace myBacklog.Views
                     Height = Height - ItemPanelHeight - 1,
                     X = ItemsListView.X,
                     Y = ItemsListView.Y
-                }, 100);
+                }, 150);
                 await SetItemStack.LayoutTo(new Rectangle
                 {
                     Width = SetItemStack.Width,
                     Height = ItemPanelHeight,
                     X = SetItemStack.X,
                     Y = SetItemStack.Y - ItemPanelHeight
-                }, 100);
+                }, 150);
             }
         }
 
@@ -185,14 +206,14 @@ namespace myBacklog.Views
                     Height = Height - BottomPanel.Height - 1,
                     X = ItemsListView.X,
                     Y = ItemsListView.Y
-                }, 100);
+                }, 150);
                 await SetItemStack.LayoutTo(new Rectangle
                 {
                     Width = SetItemStack.Width,
                     Height = 1,
                     X = SetItemStack.X,
                     Y = Height
-                }, 100);
+                }, 150);
 
                 SetToolbar();
                 ViewModel.ClearEditableItemCommand.Execute(null);
@@ -212,22 +233,7 @@ namespace myBacklog.Views
             ViewModel.EditableItem.StateID = ViewModel.EditableItem.State.StateID;
         }
 
-        private void StatePicker_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var picker = sender as Picker;
 
-            if (!(picker.SelectedItem is StateModel state))
-            {
-                return;
-            }
-
-            ViewModel.ShowStateCommand.Execute(null);
-        }
-
-        private void ShowState()
-        {
-            StatePicker.Focus();
-        }
 
         private void ItemNameEntry_TextChanged(object sender, TextChangedEventArgs e)
         {
@@ -244,19 +250,42 @@ namespace myBacklog.Views
         }
         #endregion
 
+        #region DisplayedState
+        private void StatePicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var picker = sender as Picker;
+
+            if (!(picker.SelectedItem is StateModel state))
+            {
+                return;
+            }
+
+            ViewModel.ShowStateCommand.Execute(null);
+        }
+
+        private void ShowState()
+        {
+            StatePicker.Focus();
+        }
+        #endregion
+
         #region ItemsListView
         private void ItemsListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
             var listView = sender as ListView;
-            if (e.SelectedItem != null)
+            if (e.SelectedItem != null && BottomPanel.IsVisible)
             {
                 var item = e.SelectedItem as ItemModel;
                 listView.SelectedItem = null;
 
+                PanelType = "Edit";
                 ViewModel.SetEditableItemCommand.Execute(item);
-                SetItemHeader.Text = "Edit";
 
                 ShowSetItemStack();
+            }
+            else
+            {
+                listView.SelectedItem = null;
             }
         }
 

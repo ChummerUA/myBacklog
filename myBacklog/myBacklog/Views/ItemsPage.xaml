@@ -19,7 +19,7 @@
             <Setter Property="Text" Value="{Binding ItemName}"/>
         </Style>
         <Style x:Key="SetItemHeaderStyle" TargetType="Label">
-            <Setter Property="Text" Value="New item"/>
+            <Setter Property="Text" Value="{Binding Source={x:Reference Page}, Path=PanelType}"/>
             <Setter Property="HorizontalOptions" Value="CenterAndExpand"/>
             <Setter Property="VerticalOptions" Value="Center"/>
             <Setter Property="FontSize" Value="Medium"/>
@@ -102,8 +102,8 @@
                      Icon="settings"/>
     </ContentPage.Resources>
     <ContentPage.Content>
-        <StackLayout BindingContext="{Binding Category}"
-                     x:Name="Main"
+        <StackLayout x:Name="Main"
+                     BindingContext="{Binding Category}"
                      Spacing="0">
             <ListView x:Name="ItemsListView"
                       ItemsSource="{Binding Items}"
@@ -172,8 +172,7 @@
                     ItemsSource="{Binding Source={x:Reference Page}, Path=BindingContext.States}"
                     ItemDisplayBinding="{Binding StateName}"
                     Style="{StaticResource HiddenPickerStyle}"
-                    SelectedItem="{Binding Source={x:Reference Page}, Path=BindingContext.VisibleState}"
-                    Grid.Row="1"/>
+                    SelectedItem="{Binding Source={x:Reference Page}, Path=BindingContext.VisibleState}"/>
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>
