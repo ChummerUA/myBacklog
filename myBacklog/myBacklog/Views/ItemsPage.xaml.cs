@@ -42,6 +42,8 @@ namespace myBacklog.Views
             }
         }
 
+        public double ItemPanelHeight { get; set; }
+
         public ItemsPage(ItemsViewModel vm)
         {
             InitializeComponent();
@@ -72,13 +74,15 @@ namespace myBacklog.Views
             StatePicker.SelectedIndex = 0;
             StatePicker.SelectedIndexChanged += StatePicker_SelectedIndexChanged;
 
+            ItemPanelHeight = SetItemStack.Height;
+
             SetItemStack.Layout(new Rectangle
             {
-                Width = SetItemStack.Width,
-                Height = SetItemStack.Height,
                 X = SetItemStack.X,
-                Y = Height
+                Y = Height,
+                Size = new Size(SetItemStack.Width, SetItemStack.Height)
             });
+            SetItemStack.HeightRequest = 0;
         }
 
         protected override bool OnBackButtonPressed()
@@ -149,31 +153,51 @@ namespace myBacklog.Views
 
         private async void ShowSetItemStack()
         {
-            HideToolbar();
-            BottomPanel.IsVisible = false;
-            await SetItemStack.LayoutTo(new Rectangle
+            if (BottomPanel.IsVisible)
             {
-                Width = SetItemStack.Width,
-                Height = SetItemStack.Height,
-                X = SetItemStack.X,
-                Y = SetItemStack.Y - SetItemStack.Height
-            }, 100);
+                HideToolbar();
+                BottomPanel.IsVisible = false;
+                await ItemsListView.LayoutTo(new Rectangle
+                {
+                    Width = ItemsListView.Width,
+                    Height = Height - ItemPanelHeight - 1,
+                    X = ItemsListView.X,
+                    Y = ItemsListView.Y
+                }, 100);
+                await SetItemStack.LayoutTo(new Rectangle
+                {
+                    Width = SetItemStack.Width,
+                    Height = ItemPanelHeight,
+                    X = SetItemStack.X,
+                    Y = SetItemStack.Y - ItemPanelHeight
+                }, 100);
+            }
         }
 
         private async void HideSetItemStack()
         {
-            BottomPanel.IsVisible = true;
-            await SetItemStack.LayoutTo(new Rectangle
+            if (!BottomPanel.IsVisible)
             {
-                Width = SetItemStack.Width,
-                Height = SetItemStack.Height,
-                X = SetItemStack.X,
-                Y = Height
-            }, 100);
+                BottomPanel.IsVisible = true;
+                await ItemsListView.LayoutTo(new Rectangle
+                {
+                    Width = ItemsListView.Width,
+                    Height = Height - BottomPanel.Height - 1,
+                    X = ItemsListView.X,
+                    Y = ItemsListView.Y
+                }, 100);
+                await SetItemStack.LayoutTo(new Rectangle
+                {
+                    Width = SetItemStack.Width,
+                    Height = 1,
+                    X = SetItemStack.X,
+                    Y = Height
+                }, 100);
 
-            SetToolbar();
-            ViewModel.ClearEditableItemCommand.Execute(null);
-            SetItemStatePicker.SelectedItem = null;
+                SetToolbar();
+                ViewModel.ClearEditableItemCommand.Execute(null);
+                SetItemStatePicker.SelectedItem = null;
+            }
         }
 
         private void SetItemStatePicker_SelectedIndexChanged(object sender, EventArgs e)
@@ -224,7 +248,7 @@ namespace myBacklog.Views
         private void ItemsListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
             var listView = sender as ListView;
-            if(e.SelectedItem != null)
+            if (e.SelectedItem != null)
             {
                 var item = e.SelectedItem as ItemModel;
                 listView.SelectedItem = null;

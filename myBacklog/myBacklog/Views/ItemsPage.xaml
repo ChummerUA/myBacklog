@@ -44,8 +44,7 @@
 
         <Style x:Key="SetItemStyle" TargetType="StackLayout">
             <Setter Property="VerticalOptions" Value="End"/>
-            <Setter Property="BackgroundColor" Value="Transparent"/>
-            <Setter Property="IsVisible" Value="True"/>
+            <Setter Property="BackgroundColor" Value="White"/>
             <Setter Property="BindingContext" Value="{Binding Source={x:Reference Page}, Path=BindingContext.EditableItem}"/>
         </Style>
         <Style x:Key="SetStateStyle" TargetType="StackLayout">
@@ -53,8 +52,9 @@
             <Setter Property="Margin" Value="0, 0, 18, 0"/>
         </Style>
         <Style x:Key="BottomPanelStyle" TargetType="StackLayout">
-            <Setter Property="VerticalOptions" Value="End"/>
+            <Setter Property="VerticalOptions" Value="CenterAndExpand"/>
             <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
+            <Setter Property="HeightRequest" Value="50"/>
             <Setter Property="BackgroundColor" Value="Transparent"/>
             <Setter Property="Orientation" Value="Horizontal"/>
         </Style>
@@ -66,7 +66,7 @@
             <Setter Property="HorizontalOptions" Value="Start"/>
         </Style>
         <Style x:Key="BorderStyle" TargetType="BoxView">
-            <Setter Property="VerticalOptions" Value="Start"/>
+            <Setter Property="VerticalOptions" Value="StartAndExpand"/>
             <Setter Property="HorizontalOptions" Value="Fill"/>
             <Setter Property="HeightRequest" Value="1"/>
             <Setter Property="BackgroundColor" Value="LightGray"/>
@@ -76,7 +76,7 @@
             <Setter Property="WidthRequest" Value="40"/>
             <Setter Property="HeightRequest" Value="40"/>
             <Setter Property="HorizontalOptions" Value="CenterAndExpand"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="VerticalOptions" Value="CenterAndExpand"/>
             <Setter Property="Opacity" Value="0.4"/>
             <Setter Property="BackgroundColor" Value="Transparent"/>
         </Style>
@@ -103,8 +103,10 @@
     </ContentPage.Resources>
     <ContentPage.Content>
         <StackLayout BindingContext="{Binding Category}"
-                     x:Name="Main">
-            <ListView ItemsSource="{Binding Items}"
+                     x:Name="Main"
+                     Spacing="0">
+            <ListView x:Name="ItemsListView"
+                      ItemsSource="{Binding Items}"
                       ItemSelected="ItemsListView_ItemSelected"
                       ItemAppearing="ItemListView_ItemAppearing">
                 <ListView.ItemTemplate>
@@ -120,9 +122,30 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-            
+
+
+            <StackLayout Spacing="0">
+                <BoxView Style="{StaticResource BorderStyle}"/>
+
+                <StackLayout x:Name="BottomPanel"
+                             Style="{StaticResource BottomPanelStyle}">
+                    <ImageButton x:Name="StatesButton" 
+                             Style="{StaticResource BottomButtonStyle}"
+                             Source="list"/>
+                    <ImageButton x:Name="NewItemButton" 
+                             Style="{StaticResource BottomButtonStyle}"
+                             Source="add"/>
+                    <ImageButton x:Name="SearchButton" 
+                             Style="{StaticResource BottomButtonStyle}"
+                             Source="search"/>
+                </StackLayout>
+            </StackLayout>
+
+
             <StackLayout x:Name="SetItemStack"
                          Style="{StaticResource SetItemStyle}">
+                <BoxView Style="{StaticResource BorderStyle}"/>
+                
                 <Grid>
                     <Label x:Name="SetItemHeader"
                            Style="{StaticResource SetItemHeaderStyle}"/>
@@ -145,24 +168,12 @@
                         Style="{StaticResource ConfirmButton}"/>
             </StackLayout>
 
-            <StackLayout x:Name="BottomPanel"
-                         Style="{StaticResource BottomPanelStyle}">
-                <ImageButton x:Name="StatesButton" 
-                             Style="{StaticResource BottomButtonStyle}"
-                             Source="list"/>
-                <ImageButton x:Name="NewItemButton" 
-                             Style="{StaticResource BottomButtonStyle}"
-                             Source="add"/>
-                <ImageButton x:Name="SearchButton" 
-                             Style="{StaticResource BottomButtonStyle}"
-                             Source="search"/>
-            </StackLayout>
-
             <Picker x:Name="StatePicker"
                     ItemsSource="{Binding Source={x:Reference Page}, Path=BindingContext.States}"
                     ItemDisplayBinding="{Binding StateName}"
                     Style="{StaticResource HiddenPickerStyle}"
-                    SelectedItem="{Binding Source={x:Reference Page}, Path=BindingContext.VisibleState}"/>
+                    SelectedItem="{Binding Source={x:Reference Page}, Path=BindingContext.VisibleState}"
+                    Grid.Row="1"/>
         </StackLayout>
     </ContentPage.Content>
 </ContentPage>
