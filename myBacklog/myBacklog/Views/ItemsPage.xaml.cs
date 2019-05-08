@@ -18,14 +18,13 @@ namespace myBacklog.Views
     {
         #region variables
         ItemsViewModel viewModel;
-        string panelType;
         #endregion
 
         #region ICommand
         public ICommand CategorySettingsCommand { get; }
-        public ICommand NewItemCommand { get; }
-        public ICommand CancelItemCommand { get; }
-        public ICommand ConfirmItemCommand { get; }
+        public ICommand NewItemPanelCommand { get; }
+        public ICommand SearchItemPanelCommand { get; }
+        public ICommand HidePanelCommand { get; }
         public ICommand StatesCommand { get; }
         #endregion
 
@@ -45,24 +44,6 @@ namespace myBacklog.Views
                 }
             }
         }
-
-        public double ItemPanelHeight { get; set; }
-
-        public string PanelType
-        {
-            get
-            {
-                return panelType;
-            }
-            set
-            {
-                if(value != panelType)
-                {
-                    panelType = value;
-                    OnPropertyChanged("PanelType");
-                }
-            }
-        }
         #endregion
 
         public ItemsPage(ItemsViewModel vm)
@@ -70,24 +51,20 @@ namespace myBacklog.Views
             InitializeComponent();
 
             CategorySettingsCommand = new Command(async () => await CategorySettingsAsync());
-            NewItemCommand = new Command(CreateNewItem);
-            CancelItemCommand = new Command(CancelItem);
-            ConfirmItemCommand = new Command(ConfirmItem);
+            NewItemPanelCommand = new Command(CreateNewItem);
+            HidePanelCommand = new Command(() => HideBottomPanel());
             StatesCommand = new Command(ShowState);
 
-            SaveItemButton.Command = ConfirmItemCommand;
-            NewItemButton.Command = NewItemCommand;
-            CancelButton.Command = CancelItemCommand;
+            NewItemButton.Command = NewItemPanelCommand;
             StatesButton.Command = StatesCommand;
 
             ViewModel = vm;
             BindingContext = ViewModel;
-
             SetToolbar();
         }
 
         #region override Page events
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
             ViewModel.UpdateModelCommand.Execute(null);
@@ -95,28 +72,36 @@ namespace myBacklog.Views
             StatePicker.SelectedIndex = 0;
             StatePicker.SelectedIndexChanged += StatePicker_SelectedIndexChanged;
 
-            ItemPanelHeight = SetItemStack.Height;
-
-            SetItemStack.Layout(new Rectangle
+            if (BottomPanel.IsVisible)
             {
-                X = SetItemStack.X,
-                Y = Height,
-                Size = new Size(SetItemStack.Width, SetItemStack.Height)
-            });
-            SetItemStack.HeightRequest = 0;
+                BottomPanel.MinimumHeightRequest = BottomPanel.Height;
+                ButtonsPanel.MinimumHeightRequest = ButtonsPanel.Height;
+
+                await BottomPanel.Hide(0);
+
+                NewItemStack.IsVisible = false;
+                EditItemStack.IsVisible = false;
+            }
         }
 
         protected override bool OnBackButtonPressed()
         {
-            if (!BottomPanel.IsVisible)
+            if (!ButtonsPanel.IsVisible)
             {
-                HideSetItemStack();
+                HideBottomPanel();
+                ViewModel.ResetPanelItemsCommand.Execute(null);
                 return true;
             }
             else
             {
                 return false;
             }
+        }
+
+        protected override void OnDisappearing()
+        {
+            HideBottomPanel();
+            base.OnDisappearing();
         }
         #endregion
 
@@ -146,100 +131,80 @@ namespace myBacklog.Views
         #endregion
 
         #region Bottom panel
-        private void CancelItem()
-        {
-            HideSetItemStack();
-        }
-
         private void CreateNewItem()
         {
-            ViewModel.SetEditableItemCommand.Execute(null);
-            PanelType = "New";
-            ShowSetItemStack();
+            ShowBottomPanel(NewItemStack);
+            BottomHeader.Text = "New";
         }
 
-        private void ConfirmItem()
+        private async void ShowBottomPanel(StackLayout target, uint length = 100)
         {
-            if (!ViewModel.SaveItemCommand.CanExecute(null))
-            {
-                return;
-            }
+            HideToolbar();
+            await ButtonsPanel.Hide(length);
 
-            ViewModel.SaveItemCommand.Execute(null);
-
-            StatePicker.SelectedIndex = 0;
-
-            HideSetItemStack();
+            target.IsVisible = true;
+            await BottomPanel.Show(length);
         }
 
-        private async void ShowSetItemStack()
+        private async void HideBottomPanel(uint length = 100)
         {
-            if (BottomPanel.IsVisible)
-            {
-                HideToolbar();
-                BottomPanel.IsVisible = false;
-                await ItemsListView.LayoutTo(new Rectangle
-                {
-                    Width = ItemsListView.Width,
-                    Height = Height - ItemPanelHeight - 1,
-                    X = ItemsListView.X,
-                    Y = ItemsListView.Y
-                }, 150);
-                await SetItemStack.LayoutTo(new Rectangle
-                {
-                    Width = SetItemStack.Width,
-                    Height = ItemPanelHeight,
-                    X = SetItemStack.X,
-                    Y = SetItemStack.Y - ItemPanelHeight
-                }, 150);
-            }
+            await BottomPanel.Hide(length);
+
+            await ButtonsPanel.Show(length);
+
+            NewItemStack.IsVisible = false;
+            EditItemStack.IsVisible = false;
+            SearchItemStack.IsVisible = false;
+
+            SetToolbar();
         }
 
-        private async void HideSetItemStack()
-        {
-            if (!BottomPanel.IsVisible)
-            {
-                BottomPanel.IsVisible = true;
-                await ItemsListView.LayoutTo(new Rectangle
-                {
-                    Width = ItemsListView.Width,
-                    Height = Height - BottomPanel.Height - 1,
-                    X = ItemsListView.X,
-                    Y = ItemsListView.Y
-                }, 150);
-                await SetItemStack.LayoutTo(new Rectangle
-                {
-                    Width = SetItemStack.Width,
-                    Height = 1,
-                    X = SetItemStack.X,
-                    Y = Height
-                }, 150);
-
-                SetToolbar();
-                ViewModel.ClearEditableItemCommand.Execute(null);
-                SetItemStatePicker.SelectedItem = null;
-            }
-        }
-
-        private void SetItemStatePicker_SelectedIndexChanged(object sender, EventArgs e)
+        private void NewItemStatePicker_SelectedIndexChanged(object sender, EventArgs e)
         {
             var picker = sender as Picker;
 
-            if (picker.SelectedItem == null || ViewModel.EditableItem == null)
+            if (picker.SelectedItem == null || ViewModel.NewItem == null)
             {
                 return;
             }
 
-            ViewModel.EditableItem.StateID = ViewModel.EditableItem.State.StateID;
+            ViewModel.NewItem.StateID = ViewModel.NewItem.State.StateID;
         }
 
+        private void EditItemStatePicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var picker = sender as Picker;
 
+            if (picker.SelectedItem == null || ViewModel.EditItem == null)
+            {
+                return;
+            }
+
+            ViewModel.EditItem.StateID = ViewModel.EditItem.State.StateID;
+        }
+
+        private void SearchItemStatePicker_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var picker = sender as Picker;
+
+            if (picker.SelectedItem == null || ViewModel.SearchItem.State.StateID == null)
+            {
+                return;
+            }
+
+            ViewModel.SearchItem.StateID = ViewModel.SearchItem.State.StateID;
+        }
 
         private void ItemNameEntry_TextChanged(object sender, TextChangedEventArgs e)
         {
             var entry = sender as Entry;
 
-            if (!entry.ReturnCommand.CanExecute(null) && entry.Text != null && entry.Text != "")
+            if(entry.ReturnCommand == null)
+            {
+                return;
+            }
+
+            if (!entry.ReturnCommand.CanExecute(entry.BindingContext) && entry.Text != null && entry.Text != "")
             {
                 entry.TextColor = Color.Red;
             }
@@ -247,6 +212,25 @@ namespace myBacklog.Views
             {
                 entry.TextColor = Color.Default;
             }
+        }
+
+        private void HidePanelButton_Clicked(object sender, EventArgs e)
+        {
+            HideBottomPanel();
+            ViewModel.ResetPanelItemsCommand.Execute(null);
+        }
+
+        private void CreateItemButton_Clicked(object sender, EventArgs e)
+        {
+            ViewModel.CreateItemCommand.Execute(null);
+            HideBottomPanel();
+            StatePicker.SelectedIndex = 0;
+        }
+
+        private void SaveItemButton_Clicked(object sender, EventArgs e)
+        {
+            ViewModel.SaveItemCommand.Execute(null);
+            HideBottomPanel();
         }
         #endregion
 
@@ -273,15 +257,15 @@ namespace myBacklog.Views
         private void ItemsListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
             var listView = sender as ListView;
-            if (e.SelectedItem != null && BottomPanel.IsVisible)
+            if (e.SelectedItem != null && ButtonsPanel.IsVisible)
             {
+                BottomHeader.Text = "Edit";
+
                 var item = e.SelectedItem as ItemModel;
                 listView.SelectedItem = null;
 
-                PanelType = "Edit";
-                ViewModel.SetEditableItemCommand.Execute(item);
-
-                ShowSetItemStack();
+                ViewModel.SetEditItemCommand.Execute(item);
+                ShowBottomPanel(EditItemStack);
             }
             else
             {
@@ -299,5 +283,32 @@ namespace myBacklog.Views
             }
         }
         #endregion
+    }
+
+    public static class Extension
+    {
+        public static async Task Hide(this View obj, uint length)
+        {
+            await obj.LayoutTo(new Rectangle
+            {
+                Width = obj.Width,
+                Height = 0,
+                X = obj.X,
+                Y = obj.Y + obj.Height
+            }, length);
+            obj.IsVisible = false;
+        }
+
+        public static async Task Show(this View obj, uint length)
+        {
+            obj.IsVisible = true;
+            await obj.LayoutTo(new Rectangle
+            {
+                Width = obj.Width,
+                Height = obj.MinimumHeightRequest,
+                X = obj.X,
+                Y = obj.Y - obj.MinimumHeightRequest
+            }, length);
+        }
     }
 }

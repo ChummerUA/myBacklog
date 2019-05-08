@@ -15,8 +15,9 @@ namespace myBacklog.ViewModels
     {
         #region Variables
         CategoryModel category;
-        ItemModel editableItem;
-        ItemModel searchParameters;
+        ItemModel newItem;
+        ItemModel editItem;
+        ItemModel searchItem;
         ObservableCollection<StateModel> states;
         ObservableCollection<StateModel> selectableStates;
         ObservableCollection<ItemModel> searchResults;
@@ -53,34 +54,50 @@ namespace myBacklog.ViewModels
             }
         }
 
-        public ItemModel EditableItem
+        public ItemModel EditItem
         {
             get
             {
-                return editableItem;
+                return editItem;
             }
             set
             {
-                if (value != editableItem)
+                if (value != editItem)
                 {
-                    editableItem = value;
-                    OnPropertyChanged("EditableItem");
+                    editItem = value;
+                    OnPropertyChanged("EditItem");
                 }
             }
         }
 
-        public ItemModel SearchParameters
+        public ItemModel SearchItem
         {
             get
             {
-                return searchParameters;
+                return searchItem;
             }
             set
             {
-                if (value != searchParameters)
+                if (value != searchItem)
                 {
-                    searchParameters = value;
-                    OnPropertyChanged("SearchParameters");
+                    searchItem = value;
+                    OnPropertyChanged("SearchItem");
+                }
+            }
+        }
+
+        public ItemModel NewItem
+        {
+            get
+            {
+                return newItem;
+            }
+            set
+            {
+                if (value != newItem)
+                {
+                    newItem = value;
+                    OnPropertyChanged("NewItem");
                 }
             }
         }
@@ -141,7 +158,7 @@ namespace myBacklog.ViewModels
             }
             set
             {
-                if(value != visibleState)
+                if (value != visibleState)
                 {
                     visibleState = value;
                     OnPropertyChanged("VisibleState");
@@ -152,12 +169,13 @@ namespace myBacklog.ViewModels
 
         #region ICommand
         public ICommand UpdateModelCommand { get; }
-        public ICommand SetEditableItemCommand { get; }
-        public ICommand ClearEditableItemCommand { get; }
+        public ICommand SetEditItemCommand { get; }
+        public ICommand CreateItemCommand { get; }
         public ICommand SaveItemCommand { get; }
+        public ICommand ResetPanelItemsCommand { get; }
         public ICommand ShowStateCommand { get; }
-        public ICommand SetItemNameCommand { get; }
         public ICommand LoadMoreCommand { get; }
+        public ICommand SetItemNameCommand { get; }
         #endregion
 
         public ItemsViewModel(CategoryModel c)
@@ -165,14 +183,18 @@ namespace myBacklog.ViewModels
             Category = c;
 
             UpdateModelCommand = new Command(async () => await UpdateModelAsync());
-            SetEditableItemCommand = new Command<ItemModel>((parameter) => SetEditableItem(parameter));
+            SetEditItemCommand = new Command<ItemModel>((parameter) => SetEditItem(parameter));
+            CreateItemCommand = new Command(execute: async () => await CreateItemAsync(),
+                canExecute: () => CanCreateItem());
             SaveItemCommand = new Command(execute: async () => await SaveItemAsync(),
                 canExecute: CanSaveItem);
-            ShowStateCommand = new Command(async (paramete) => await ShowStateAsync());
-            ClearEditableItemCommand = new Command(ClearEditableItem);
-            SetItemNameCommand = new Command(execute: SetItemName,
-                canExecute: CanSetItemName);
+            ResetPanelItemsCommand = new Command(ResetPanelItems);
+            ShowStateCommand = new Command(async () => await ShowStateAsync());
             LoadMoreCommand = new Command(execute: async () => await LoadMoreAsync());
+            SetItemNameCommand = new Command<ItemModel>(execute:(parameter) => SetItemName(parameter),
+                canExecute: (parameter) => CanSetItemName(parameter));
+
+            ResetPanelItems();
         }
 
         #region Execute()
@@ -203,29 +225,35 @@ namespace myBacklog.ViewModels
             VisibleState = States[0];
         }
 
-        private void SetEditableItem(ItemModel item = null)
+        private void ResetPanelItems()
         {
-            if (item == null)
+            EditItem = new ItemModel
             {
-                item = new ItemModel
-                {
-                    ItemName = "",
-                    CategoryID = Category.CategoryID
-                };
-            }
-            EditableItem = new ItemModel
+                ItemName = "",
+                CategoryID = Category.CategoryID
+            };
+            NewItem = new ItemModel
             {
-                CategoryID = item.CategoryID,
-                StateID = item.StateID,
-                ItemID = item.ItemID,
-                ItemName = item.ItemName,
-                State = item.State
+                ItemName = "",
+                CategoryID = Category.CategoryID
+            };
+            SearchItem = new ItemModel
+            {
+                ItemName = "",
+                CategoryID = Category.CategoryID,
             };
         }
 
-        private void ClearEditableItem()
+        private void SetEditItem(ItemModel item = null)
         {
-            EditableItem = null;
+            EditItem = new ItemModel
+            {
+                CategoryID = item.CategoryID,
+                ItemName = item.ItemName,
+                ItemID = item.ItemID,
+                State = item.State,
+                StateID = item.StateID
+            };
         }
 
         private async Task SaveItemAsync()
@@ -234,29 +262,27 @@ namespace myBacklog.ViewModels
             {
                 return;
             }
+            await App.Database.UpdateItemAsync(EditItem);
 
-
-            if (EditableItem.ItemID != null)
-            {
-                await App.Database.UpdateItemAsync(EditableItem);
-                VisibleState = States[0];
-                ShowStateCommand.Execute(null);
-            }
-            else
-            {
-                var item = EditableItem;
-                await App.Database.CreateItemAsync(item);
-                VisibleState = States[0];
-                ShowStateCommand.Execute(null);
-            }
+            var i = Category.Items.IndexOf(Category.Items.FirstOrDefault(x => x.ItemID == EditItem.ItemID));
+            Category.Items[i] = EditItem;
+            ResetPanelItemsCommand.Execute(null);
         }
 
-        private void SetItemName()
+        private async Task CreateItemAsync()
         {
-            if (!CanSetItemName() && EditableItem.ItemID != null)
+            if (!CanCreateItem())
             {
-                EditableItem.ItemName = Category.Items.FirstOrDefault(x => x.ItemID == EditableItem.ItemID).ItemName;
+                return;
             }
+            await App.Database.CreateItemAsync(NewItem);
+            await ShowStateAsync();
+            ResetPanelItemsCommand.Execute(null);
+        }
+
+        private void SetItemName(ItemModel target)
+        {
+            //
         }
 
         private async Task ShowStateAsync()
@@ -291,9 +317,9 @@ namespace myBacklog.ViewModels
 
             List<ItemModel> items;
 
-            if(SearchParameters != null)
+            if(SearchItem != null)
             {
-                items = await App.Database.GetSearchResultsAsync(SearchParameters, (int)SearchResults.Last().ItemID);
+                items = await App.Database.GetSearchResultsAsync(SearchItem, (int)SearchResults.Last().ItemID);
                 foreach(var item in items)
                 {
                     SearchResults.Add(item);
@@ -344,40 +370,66 @@ namespace myBacklog.ViewModels
         #region CanExecute()
         private bool CanSaveItem()
         {
-            if (EditableItem.ItemName == "")
-            {
-                return false;
-            }
-            if(EditableItem.StateID == null)
+            if(EditItem == null)
             {
                 return false;
             }
 
-            return App.Database.IsItemNameAwailable(EditableItem);
+            if(EditItem.State == null)
+            {
+                return false;
+            }
+
+            if(EditItem.ItemName == "")
+            {
+                return false;
+            }
+
+            return App.Database.IsItemNameAwailable(EditItem);
         }
 
-        private bool CanSetItemName()
+        private bool CanCreateItem()
         {
-            if(EditableItem == null)
+            if (NewItem == null)
             {
                 return false;
             }
-            if(EditableItem.ItemName == "")
+
+            if (NewItem.State == null)
             {
                 return false;
             }
-            return App.Database.IsItemNameAwailable(EditableItem);
+
+            if (NewItem.ItemName == "")
+            {
+                return false;
+            }
+
+            return App.Database.IsItemNameAwailable(NewItem);
+        }
+
+        private bool CanSetItemName(ItemModel target)
+        {
+            if(target == null)
+            {
+                return false;
+            }
+            if(target.ItemName == "")
+            {
+                return false;
+            }
+            return App.Database.IsItemNameAwailable(target);
         }
 
         private bool CanLoadMore()
         {
-            if(SearchParameters != null)
+            if(SearchItem != null)
             {
-                if(SearchParameters.ItemName == "")
+                if(SearchItem.ItemName == "")
                 {
                     return false;
                 }
-                else if (App.Database.GetSearchResultsCount(SearchParameters) == SearchResults.Count)
+                else if (App.Database.GetSearchResultsCount(SearchItem) == SearchResults.Count)
                 {
                     return false;
                 }
