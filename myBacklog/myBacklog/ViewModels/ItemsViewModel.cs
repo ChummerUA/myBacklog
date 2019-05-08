@@ -22,6 +22,7 @@ namespace myBacklog.ViewModels
         ObservableCollection<StateModel> selectableStates;
         ObservableCollection<ItemModel> searchResults;
         StateModel visibleState;
+        bool isItemsLoading;
         #endregion
 
         #region PropertyChanged
@@ -165,6 +166,22 @@ namespace myBacklog.ViewModels
                 }
             }
         }
+
+        public bool IsItemsLoading
+        {
+            get
+            {
+                return isItemsLoading;
+            }
+            set
+            {
+                if (value != isItemsLoading)
+                {
+                    isItemsLoading = value;
+                    OnPropertyChanged("IsItemsLoading");
+                }
+            }
+        }
         #endregion
 
         #region ICommand
@@ -173,7 +190,7 @@ namespace myBacklog.ViewModels
         public ICommand CreateItemCommand { get; }
         public ICommand SaveItemCommand { get; }
         public ICommand ResetPanelItemsCommand { get; }
-        public ICommand ShowStateCommand { get; }
+        public ICommand ShowItemsCommand { get; }
         public ICommand LoadMoreCommand { get; }
         public ICommand SetItemNameCommand { get; }
         #endregion
@@ -189,7 +206,7 @@ namespace myBacklog.ViewModels
             SaveItemCommand = new Command(execute: async () => await SaveItemAsync(),
                 canExecute: CanSaveItem);
             ResetPanelItemsCommand = new Command(ResetPanelItems);
-            ShowStateCommand = new Command(async () => await ShowStateAsync());
+            ShowItemsCommand = new Command(async () => await ShowItemsAsync());
             LoadMoreCommand = new Command(execute: async () => await LoadMoreAsync());
             SetItemNameCommand = new Command<ItemModel>(execute:(parameter) => SetItemName(parameter),
                 canExecute: (parameter) => CanSetItemName(parameter));
@@ -201,7 +218,7 @@ namespace myBacklog.ViewModels
         private async Task UpdateModelAsync()
         {
             await SetSelectableStatesAsync();
-            ShowStateCommand.Execute(null);
+            ShowItemsCommand.Execute(null);
         }
 
         private async Task SetSelectableStatesAsync()
@@ -276,7 +293,7 @@ namespace myBacklog.ViewModels
                 return;
             }
             await App.Database.CreateItemAsync(NewItem);
-            await ShowStateAsync();
+            await ShowItemsAsync();
             ResetPanelItemsCommand.Execute(null);
         }
 
@@ -285,12 +302,16 @@ namespace myBacklog.ViewModels
             //
         }
 
-        private async Task ShowStateAsync()
+        private async Task ShowItemsAsync()
         {
-            List<ItemModel> items;
+            List<ItemModel> items = new List<ItemModel>();
             if (VisibleState == States[0])
             {
                 items = await App.Database.GetCategoryItemsAsync((int)Category.CategoryID);                
+            }
+            else if(VisibleState.StateName == "SearchResults")
+            {
+                items = await App.Database.GetSearchResultsAsync(SearchItem);
             }
             else
             {
@@ -315,55 +336,37 @@ namespace myBacklog.ViewModels
                 return;
             }
 
-            List<ItemModel> items;
+            IsItemsLoading = true;
 
-            if(SearchItem != null)
+            if (VisibleState == States[0])
             {
-                items = await App.Database.GetSearchResultsAsync(SearchItem, (int)SearchResults.Last().ItemID);
-                foreach(var item in items)
+                var items = await App.Database.GetCategoryItemsAsync((int)Category.CategoryID, (int)Category.Items.Last().ItemID);
+                for(int i = 0; i < items.Count; i++)
                 {
-                    SearchResults.Add(item);
+                    items[i].State = SelectableStates.FirstOrDefault(x => x.StateID == items[i].StateID);
+                    Category.Items.Add(items[i]);
                 }
-
-                var source = SearchResults.ToList()
-                    .OrderBy(x => x.StateID)
-                    .ThenByDescending(x => x.ItemID)
-                    .ToList();
-
-                SearchResults = new ObservableCollection<ItemModel>(source);
             }
-            else if (VisibleState.StateName != "All")
+            else if (VisibleState.StateName == "SearchResults")
             {
-                items = await App.Database.GetStateItemsAsync((int)VisibleState.StateID, (int)Category.Items.Last().ItemID);
-
-                foreach(var item in items)
+                var items = await App.Database.GetSearchResultsAsync(SearchItem, (int)SearchResults.Last().ItemID);
+                for (int i = 0; i < items.Count; i++)
                 {
-                    Category.Items.Add(item);
+                    items[i].State = SelectableStates.FirstOrDefault(x => x.StateID == items[i].StateID);
+                    SearchResults.Add(items[i]);
                 }
-
-                var source = Category.Items.ToList()
-                    .OrderBy(x => x.StateID)
-                    .ThenByDescending(x => x.ItemID)
-                    .ToList();
-
-                Category.Items = new ObservableCollection<ItemModel>(source);
             }
-            else
+            else if (VisibleState.StateID != null)
             {
-                items = await App.Database.GetCategoryItemsAsync((int)Category.CategoryID, (int)Category.Items.Last().ItemID);
-
-                foreach(var item in items)
+                var items = await App.Database.GetStateItemsAsync((int)VisibleState.StateID, (int)Category.Items.Last().ItemID);
+                for (int i = 0; i < items.Count; i++)
                 {
-                    Category.Items.Add(item);
+                    items[i].State = SelectableStates.FirstOrDefault(x => x.StateID == items[i].StateID);
+                    Category.Items.Add(items[i]);
                 }
-
-                var source = Category.Items.ToList()
-                    .OrderBy(x => x.StateID)
-                    .ThenByDescending(x => x.ItemID)
-                    .ToList();
-
-                Category.Items = new ObservableCollection<ItemModel>(source);
             }
+
+            IsItemsLoading = false;
         }
         #endregion
 
@@ -423,31 +426,38 @@ namespace myBacklog.ViewModels
 
         private bool CanLoadMore()
         {
-            if(SearchItem != null)
+            if (IsItemsLoading)
             {
-                if(SearchItem.ItemName == "")
-                {
-                    return false;
-                }
-                else if (App.Database.GetSearchResultsCount(SearchItem) == SearchResults.Count)
+                return false;
+            }
+            if (VisibleState == States[0])
+            {
+                var count = App.Database.GetCategoryItemsCount((int)Category.CategoryID);
+
+                if (Category.Items.Count >= count)
                 {
                     return false;
                 }
             }
-            else if (VisibleState.StateName == "All")
+            else if (VisibleState.StateName == "SearchResults")
             {
-                if (App.Database.GetCategoryItemsCount((int)Category.CategoryID) == Category.Items.Count)
+                var count = App.Database.GetSearchResultsCount(SearchItem);
+
+                if (SearchResults.Count >= count)
                 {
                     return false;
                 }
             }
-            else
+            else if (VisibleState.StateID != null)
             {
-                if (App.Database.GetStateItemsCount((int)VisibleState.StateID) == Category.Items.Count)
+                var count = App.Database.GetStateItemsCount((int)VisibleState.StateID);
+
+                if (Category.Items.Count >= count)
                 {
                     return false;
                 }
             }
+
             return true;
         }
         #endregion

@@ -4,7 +4,7 @@
              x:Class="myBacklog.Views.ItemsPage"
              x:Name="Page"
              Visual="Material"
-             Title="{Binding Source={x:Reference Page}, Path=BindingContext.Category.CategoryName}">
+             Title="{Binding Source={x:Reference Page}, Path=BindingContext.Category.Items.Count}">
     <ContentPage.Resources>
         <!--#region Label-->
         <Style x:Key="StateHeaderStyle" TargetType="Label">
@@ -126,7 +126,8 @@
             <ListView x:Name="ItemsListView"
                       ItemsSource="{Binding Items}"
                       ItemSelected="ItemsListView_ItemSelected"
-                      ItemAppearing="ItemListView_ItemAppearing">
+                      ItemAppearing="ItemListView_ItemAppearing"
+                      IsRefreshing="{Binding Source={x:Reference Page}, Path=BindingContext.IsItemsLoading}">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>

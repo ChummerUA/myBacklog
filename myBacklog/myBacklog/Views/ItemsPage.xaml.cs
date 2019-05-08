@@ -100,7 +100,10 @@ namespace myBacklog.Views
 
         protected override void OnDisappearing()
         {
-            HideBottomPanel();
+            if (!ButtonsPanel.IsVisible)
+            {
+                HideBottomPanel();
+            }
             base.OnDisappearing();
         }
         #endregion
@@ -244,7 +247,7 @@ namespace myBacklog.Views
                 return;
             }
 
-            ViewModel.ShowStateCommand.Execute(null);
+            ViewModel.ShowItemsCommand.Execute(null);
         }
 
         private void ShowState()
@@ -277,7 +280,7 @@ namespace myBacklog.Views
         {
             var listview = sender as ListView;
             var source = listview.ItemsSource as ObservableCollection<ItemModel>;
-            if (source.IndexOf((e.Item as ItemModel)) >= source.Count - 15)
+            if (source.IndexOf((e.Item as ItemModel)) >= source.Count - 5 && !listview.IsRefreshing)
             {
                 ViewModel.LoadMoreCommand.Execute(null);
             }
