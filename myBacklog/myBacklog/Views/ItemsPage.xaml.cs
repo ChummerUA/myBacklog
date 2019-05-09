@@ -231,9 +231,11 @@ namespace myBacklog.Views
             if (!entry.ReturnCommand.CanExecute(entry.BindingContext) && entry.Text != null && entry.Text != "")
             {
                 entry.TextColor = Color.Red;
+                entry.PlaceholderColor = Color.Red;
             }
             else
             {
+                entry.PlaceholderColor = Color.Default;
                 entry.TextColor = Color.Default;
             }
         }
@@ -245,9 +247,16 @@ namespace myBacklog.Views
 
         private void CreateItemButton_Clicked(object sender, EventArgs e)
         {
-            ViewModel.CreateItemCommand.Execute(null);
-            HideBottomPanel();
-            StatePicker.SelectedIndex = 0;
+            if (ViewModel.CreateItemCommand.CanExecute(null))
+            {
+                ViewModel.CreateItemCommand.Execute(null);
+                HideBottomPanel();
+                StatePicker.SelectedIndex = 0;
+            }
+            else
+            {
+                NewItemNameEntry.PlaceholderColor = Color.Red;
+            }
         }
 
         private void SearchItemButton_Clicked(object sender, EventArgs e)
@@ -262,8 +271,15 @@ namespace myBacklog.Views
 
         private void SaveItemButton_Clicked(object sender, EventArgs e)
         {
-            ViewModel.SaveItemCommand.Execute(null);
-            HideBottomPanel();
+            if (ViewModel.SaveItemCommand.CanExecute(null))
+            {
+                ViewModel.SaveItemCommand.Execute(null);
+                HideBottomPanel();
+            }
+            else
+            {
+                EditItemNameEntry.PlaceholderColor = Color.Red;
+            }
         }
         #endregion
 

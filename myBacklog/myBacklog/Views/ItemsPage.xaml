@@ -117,7 +117,7 @@
         <!--#endregion-->
 
         <ToolbarItem x:Key="SettingsButton"
-                     Icon="settings"/>
+                     Icon="settings_white"/>
     </ContentPage.Resources>
     <ContentPage.Content>
         <StackLayout x:Name="Main"
@@ -181,7 +181,8 @@
                                  BindingContext="{Binding NewItem}"
                                  IsVisible="True"
                                  Style="{StaticResource ItemStackStyle}">
-                        <Entry Style="{StaticResource ItemEntryStyle}"
+                        <Entry x:Name="NewItemNameEntry"
+                               Style="{StaticResource ItemEntryStyle}"
                                TextChanged="ItemNameEntry_TextChanged"/>
                         <StackLayout Style="{StaticResource PanelStateStyle}">
                             <BoxView Style="{StaticResource StateColorStyle}"
@@ -202,7 +203,8 @@
                                  BindingContext="{Binding EditItem}"
                                  IsVisible="False"
                                  Style="{StaticResource ItemStackStyle}">
-                        <Entry Style="{StaticResource ItemEntryStyle}"
+                        <Entry x:Name="EditItemNameEntry"
+                               Style="{StaticResource ItemEntryStyle}"
                                TextChanged="ItemNameEntry_TextChanged"/>
                         <StackLayout Style="{StaticResource PanelStateStyle}">
                             <BoxView Style="{StaticResource StateColorStyle}"

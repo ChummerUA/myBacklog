@@ -9,7 +9,7 @@
     <ContentPage.Resources>
         <Style x:Key="LabelStyle" TargetType="Label">
             <Setter Property="FontSize" Value="Large"/>
-            <Setter Property="Margin" Value="10,0,10,0"/>
+            <Setter Property="Margin" Value="10,10,10,0"/>
             <Setter Property="VerticalOptions" Value="StartAndExpand"/>
         </Style>
         <Style x:Key="EntryStyle" TargetType="Entry">
@@ -57,7 +57,7 @@
             <Setter Property="CommandParameter" Value="{Binding .}"/>
         </Style>
         <ToolbarItem x:Key="ToolbarItem"
-                     Icon="confirm"/>
+                     Icon="confirm_white"/>
     </ContentPage.Resources>
     <ContentPage.Content>
         <ScrollView>
@@ -70,7 +70,7 @@
                            TextChanged="CategoryNameEntry_TextChanged"
                            Unfocused="CategoryNameEntry_Unfocused"/>
                 </StackLayout>
-                <StackLayout>
+                <StackLayout Margin="10, 0, 10, 0">
                     <Label Style="{StaticResource LabelStyle}"
                            Text="States"/>
                     <StackLayout x:Name="StatesListView"
@@ -95,14 +95,15 @@
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </StackLayout>
-                    <Entry x:Name="NewStateEntry" 
+                    
+                </StackLayout>
+                <Entry x:Name="NewStateEntry" 
                            Style="{StaticResource NewStateStyle}"
                            Text=""
                            TextChanged="NewStateEntry_TextChanged"
                            Completed="NewStateEntry_Completed"
                            Unfocused="NewStateEntry_Unfocused">
-                    </Entry>
-                </StackLayout>
+                </Entry>
             </StackLayout>
         </ScrollView>
     </ContentPage.Content>

@@ -18,12 +18,12 @@
             <Setter Property="Text" Value="{Binding CategoryName}"/>
         </Style>
         <Style x:Key="ButtonStyle" TargetType="ImageButton">
-            <Setter Property="Source" Value="add"/>
-            <Setter Property="WidthRequest" Value="50"/>
-            <Setter Property="HeightRequest" Value="50"/>
-            <Setter Property="VerticalOptions" Value="EndAndExpand"/>
-            <Setter Property="HorizontalOptions" Value="CenterAndExpand"/>
-            <Setter Property="Margin" Value="0,0,0,10"/>
+            <Setter Property="Source" Value="add_white"/>
+            <Setter Property="WidthRequest" Value="40"/>
+            <Setter Property="HeightRequest" Value="40"/>
+            <!--<Setter Property="VerticalOptions" Value="EndAndExpand"/>
+            <Setter Property="HorizontalOptions" Value="CenterAndExpand"/>-->
+            <!--<Setter Property="Margin" Value="0,0,0,10"/>-->
             <Setter Property="BackgroundColor" Value="Transparent"/>
         </Style>
         <Style x:Key="CategoriesStyle" TargetType="ListView">
@@ -50,9 +50,18 @@
                     </ListView.ItemTemplate>
                 </ListView>
             </StackLayout>
-            <ImageButton Style="{StaticResource ButtonStyle}"
+            <Frame Padding="0"
+                   CornerRadius="20"
+                   VerticalOptions="EndAndExpand"
+                   HorizontalOptions="CenterAndExpand"
+                   HeightRequest="40"
+                   WidthRequest="40"
+                   BackgroundColor="{StaticResource NavigationPrimary}"
+                   Margin="0, 0, 0, 15">
+                <ImageButton Style="{StaticResource ButtonStyle}"
                          x:Name="AddCategoryButton"
                          Command="{Binding Source={x:Reference Page}, Path=CreateCategoryCommand}"/>
+            </Frame>
         </Grid>
     </ContentPage.Content>
 </ContentPage>
