@@ -211,7 +211,7 @@ namespace myBacklog.Data
             {
                 return await database.Table<ItemModel>()
                     .Where(x => x.StateID == target.StateID &&
-                    x.ItemName.Contains(target.ItemName))
+                    x.ItemName == target.ItemName)
                     .OrderByDescending(x => x.ItemID)
                     .Take(30)
                     .ToListAsync();

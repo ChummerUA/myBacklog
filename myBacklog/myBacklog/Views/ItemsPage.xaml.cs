@@ -51,11 +51,13 @@ namespace myBacklog.Views
             InitializeComponent();
 
             CategorySettingsCommand = new Command(async () => await CategorySettingsAsync());
-            NewItemPanelCommand = new Command(CreateNewItem);
+            NewItemPanelCommand = new Command(ShowNewItemPanel);
+            SearchItemPanelCommand = new Command(ShowSearchItemPanel);
             HidePanelCommand = new Command(() => HideBottomPanel());
             StatesCommand = new Command(ShowState);
 
             NewItemButton.Command = NewItemPanelCommand;
+            SearchButton.Command = SearchItemPanelCommand;
             StatesButton.Command = StatesCommand;
 
             ViewModel = vm;
@@ -89,7 +91,13 @@ namespace myBacklog.Views
             if (!ButtonsPanel.IsVisible)
             {
                 HideBottomPanel();
-                ViewModel.ResetPanelItemsCommand.Execute(null);
+                return true;
+            }
+            else if(Title == "Search")
+            {
+                Title = ViewModel.Category.CategoryName;
+                ViewModel.ResetSearchItemCommand.Execute(null);
+                ViewModel.ShowItemsCommand.Execute(null);
                 return true;
             }
             else
@@ -134,10 +142,17 @@ namespace myBacklog.Views
         #endregion
 
         #region Bottom panel
-        private void CreateNewItem()
+        private void ShowNewItemPanel()
         {
             ShowBottomPanel(NewItemStack);
             BottomHeader.Text = "New";
+        }
+
+        private void ShowSearchItemPanel()
+        {
+            ShowBottomPanel(SearchItemStack);
+            SearchItemStatePicker.SelectedIndex = 0;
+            BottomHeader.Text = "Search";
         }
 
         private async void ShowBottomPanel(StackLayout target, uint length = 100)
@@ -190,7 +205,13 @@ namespace myBacklog.Views
         {
             var picker = sender as Picker;
 
-            if (picker.SelectedItem == null || ViewModel.SearchItem.State.StateID == null)
+            if (picker.SelectedItem == null || ViewModel.SearchItem.State == null)
+            {
+                return;
+            }
+
+            var state = picker.SelectedItem as StateModel;
+            if (state.StateID == null)
             {
                 return;
             }
@@ -220,7 +241,6 @@ namespace myBacklog.Views
         private void HidePanelButton_Clicked(object sender, EventArgs e)
         {
             HideBottomPanel();
-            ViewModel.ResetPanelItemsCommand.Execute(null);
         }
 
         private void CreateItemButton_Clicked(object sender, EventArgs e)
@@ -228,6 +248,16 @@ namespace myBacklog.Views
             ViewModel.CreateItemCommand.Execute(null);
             HideBottomPanel();
             StatePicker.SelectedIndex = 0;
+        }
+
+        private void SearchItemButton_Clicked(object sender, EventArgs e)
+        {
+            if (ViewModel.SearchItem.ItemName != "")
+            {
+                Title = "Search";
+                ViewModel.ShowItemsCommand.Execute(null);
+                HideBottomPanel();
+            }
         }
 
         private void SaveItemButton_Clicked(object sender, EventArgs e)
@@ -245,6 +275,13 @@ namespace myBacklog.Views
             if (!(picker.SelectedItem is StateModel state))
             {
                 return;
+            }
+
+            var items = ItemsListView.ItemsSource as ObservableCollection<ItemModel>;
+
+            if(items != null && items.Count > 0)
+            {
+                ItemsListView.ScrollTo(items[0], ScrollToPosition.Start, false);
             }
 
             ViewModel.ShowItemsCommand.Execute(null);

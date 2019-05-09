@@ -4,7 +4,7 @@
              x:Class="myBacklog.Views.ItemsPage"
              x:Name="Page"
              Visual="Material"
-             Title="{Binding Source={x:Reference Page}, Path=BindingContext.Category.Items.Count}">
+             Title="{Binding Source={x:Reference Page}, Path=BindingContext.Category.CategoryName}">
     <ContentPage.Resources>
         <!--#region Label-->
         <Style x:Key="StateHeaderStyle" TargetType="Label">
@@ -223,20 +223,20 @@
                                  BindingContext="{Binding SearchItem}"
                                  IsVisible="False"
                                  Style="{StaticResource ItemStackStyle}">
-                        <Entry Style="{StaticResource ItemEntryStyle}"
-                               TextChanged="ItemNameEntry_TextChanged"/>
+                        <Entry Style="{StaticResource ItemEntryStyle}"/>
                         <StackLayout Style="{StaticResource PanelStateStyle}">
                             <BoxView Style="{StaticResource StateColorStyle}"
-                                     BackgroundColor="{Binding Source={x:Reference SearchItemStatePicker}, Path=SelectedItem.Color, FallbackValue=Transparent}"/>
+                                     BackgroundColor="{Binding Source={x:Reference SearchItemStatePicker}, Path=SelectedItem.Color}"/>
                             <Picker x:Name="SearchItemStatePicker"
                                     Style="{StaticResource PickerStyle}"
-                                    SelectedItem="{Binding State, FallbackValue=''}"
+                                    
                                     ItemsSource="{Binding Source={x:Reference Page}, Path=BindingContext.States}"
                                     ItemDisplayBinding="{Binding StateName}"
                                     SelectedIndexChanged="SearchItemStatePicker_SelectedIndexChanged"/>
                         </StackLayout>
                         <Button x:Name="SearchItemButton"
-                                Style="{StaticResource ConfirmButton}"/>
+                                Style="{StaticResource ConfirmButton}"
+                                Clicked="SearchItemButton_Clicked"/>
                     </StackLayout>
                 </StackLayout>
             </Frame>

@@ -59,11 +59,15 @@ namespace myBacklog.Models
 
             var transparent = all.FirstOrDefault(x => x.Name == "Transparent");
 
+            Transparent = transparent;
+
             all.Remove(transparent);
             all.TrimExcess();
             All = all;
         }
 
         public static List<NamedColor> All { private set; get; }
+
+        public static NamedColor Transparent { private set; get; }
     }
 }
