@@ -56,8 +56,10 @@
             <Setter Property="Command" Value="{Binding Path=BindingContext.RemoveStateCommand, Source={x:Reference Name=Page}}"/>
             <Setter Property="CommandParameter" Value="{Binding .}"/>
         </Style>
-        <ToolbarItem x:Key="ToolbarItem"
+        <ToolbarItem x:Key="ConfirmCategory"
                      Icon="confirm_white"/>
+        <ToolbarItem x:Key="DeleteCategory"
+                     Icon="delete_white"/>
     </ContentPage.Resources>
     <ContentPage.Content>
         <ScrollView>

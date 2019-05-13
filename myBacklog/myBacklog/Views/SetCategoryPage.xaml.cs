@@ -20,6 +20,7 @@ namespace myBacklog.Views
         SetCategoryViewModel viewModel;
 
         public ICommand ConfirmCommand { get; }
+        public ICommand DeleteCommand { get; }
 
         public SetCategoryViewModel ViewModel
         {
@@ -38,8 +39,8 @@ namespace myBacklog.Views
         }
 
         public SetCategoryPage(SetCategoryViewModel vm)
-		{
-			InitializeComponent ();
+        {
+            InitializeComponent();
 
             ViewModel = vm;
             BindingContext = ViewModel;
@@ -54,12 +55,22 @@ namespace myBacklog.Views
                 ViewModel.GetCategoryCommand.Execute(null);
             }
 
-            ConfirmCommand = new Command(execute: async () => await SaveAsync());
 
             if (ViewModel.IsNewCategory)
             {
-                var item = Resources["ToolbarItem"] as ToolbarItem;
+                ConfirmCommand = new Command(execute: async () => await SaveAsync());
+
+                var item = Resources["ConfirmCategory"] as ToolbarItem;
                 item.Command = ConfirmCommand;
+
+                ToolbarItems.Add(item);
+            }
+            else
+            {
+                DeleteCommand = new Command(execute: async () => await DeleteAsync());
+
+                var item = Resources["DeleteCategory"] as ToolbarItem;
+                item.Command = DeleteCommand;
 
                 ToolbarItems.Add(item);
             }
@@ -71,6 +82,16 @@ namespace myBacklog.Views
             {
                 ViewModel.SaveCategoryCommand.Execute(null);
                 await Navigation.PopAsync();
+            }
+        }
+
+        private async Task DeleteAsync()
+        {
+            bool delete = await DisplayAlert("Delete", "If you delete category, all items from it will be lost", "Yes", "No");
+
+            if (delete)
+            {
+                ViewModel.DeleteCategoryCommand.Execute(null);
             }
         }
 

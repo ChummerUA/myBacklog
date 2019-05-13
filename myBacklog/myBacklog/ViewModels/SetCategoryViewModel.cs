@@ -107,6 +107,7 @@ namespace myBacklog.ViewModels
 
         public ICommand SetCategoryNameCommand { get; private set; }
         public ICommand SaveCategoryCommand { get; private set; }
+        public ICommand DeleteCategoryCommand { get; private set; }
 
         public ICommand GetCategoryCommand { get; private set; }
 
@@ -156,6 +157,7 @@ namespace myBacklog.ViewModels
             SetCategoryNameCommand = new Command(execute: async () => await SetCategoryNameAsync(),
                 canExecute: CanSetCategoryName);
             GetCategoryCommand = new Command(execute: async () => await GetCategoryAsync());
+            DeleteCategoryCommand = new Command(execute: async () => await DeleteCategoryAsync());
 
             CreateStateCommand = new Command<string>(execute: async (parameter) => await CreateStateAsync(parameter),
                 canExecute: (parameter) => CanCreateState(parameter));
@@ -212,6 +214,11 @@ namespace myBacklog.ViewModels
             }
 
             SaveChanges();
+        }
+        
+        private async Task DeleteCategoryAsync()
+        {
+            await App.Database.DeleteCategoryAsync(Category);
         }
 
         private async Task CreateStateAsync(string name)
