@@ -1,4 +1,5 @@
 ﻿using myBacklog.Models;
+using myBacklog.Services;
 using Prism.Mvvm;
 using Prism.Navigation;
 using System;
@@ -30,8 +31,6 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Property
-        INavigationService NavigationService { get; set; }
-
         public ObservableCollection<CategoryModel> Categories
         {
             get
@@ -55,9 +54,8 @@ namespace myBacklog.ViewModels
         public ICommand OpenCategoryCommand { get; }
         #endregion
 
-        public CategoriesViewModel(INavigationService navigationService)
+        public CategoriesViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
         {
-            NavigationService = navigationService;
             UpdateCategoriesCommand = new Command(async () => await UpdateCategoriesAsync());
             CreateCategoryCommand = new Command(async () => await CreateCategoryAsync());
             OpenCategoryCommand = new Command<CategoryModel>(async (param) => await OpenCategoryAsync(param));

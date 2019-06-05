@@ -1,4 +1,5 @@
 ﻿using myBacklog.Models;
+using myBacklog.Services;
 using Prism.Navigation;
 using System;
 using System.Collections.Generic;
@@ -39,8 +40,6 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Properties
-        INavigationService NavigationService { get; set; }
-
         public CategoryModel Category
         {
             get
@@ -177,15 +176,15 @@ namespace myBacklog.ViewModels
         public ICommand SaveItemCommand { get; }
         public ICommand ResetNewItemCommand { get; }
         public ICommand ResetSearchItemCommand { get; }
+        public ICommand ResetPanelItemsCommand { get; }
         public ICommand ShowItemsCommand { get; }
         public ICommand LoadMoreCommand { get; }
         public ICommand SetItemNameCommand { get; }
         public ICommand CategorySettingsCommand { get; }
         #endregion
 
-        public ItemsViewModel(INavigationService navigationService)
+        public ItemsViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
         {
-            NavigationService = navigationService;
 
             UpdateModelCommand = new Command(async () => await UpdateModelAsync());
             SetEditItemCommand = new Command<ItemModel>((parameter) => SetEditItem(parameter));
@@ -200,6 +199,7 @@ namespace myBacklog.ViewModels
             SetItemNameCommand = new Command<ItemModel>(execute:(parameter) => SetItemName(parameter),
                 canExecute: (parameter) => CanSetItemName(parameter));
             CategorySettingsCommand = new Command(async () => await OpenCategorySettingsAsync());
+            ResetPanelItemsCommand = new Command(ResetPanelItems);
         }
 
         public override void OnNavigatingTo(INavigationParameters parameters)
@@ -210,12 +210,9 @@ namespace myBacklog.ViewModels
                 Category = c;
                 UpdateModelCommand.Execute(null);
             }
-            else
+            else if(parameters.ContainsKey("IsUpdated"))
             {
-                if (parameters.ContainsKey("IsUpdated"))
-                {
-                    UpdateModelCommand.Execute(null);
-                }
+                UpdateModelCommand.Execute(null);
             }
         }
 
@@ -385,6 +382,12 @@ namespace myBacklog.ViewModels
 
             await NavigationService.NavigateAsync("SetCategoryPage", parameters);
         }
+
+        private void ResetPanelItems()
+        {
+            ResetNewItemCommand.Execute(null);
+            ResetSearchItemCommand.Execute(null);
+        }
         #endregion
 
         #region CanExecute()
@@ -444,6 +447,10 @@ namespace myBacklog.ViewModels
         private bool CanLoadMore()
         {
             if (IsItemsLoading)
+            {
+                return false;
+            }
+            if(Category.Items.Count == 0)
             {
                 return false;
             }

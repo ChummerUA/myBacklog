@@ -3,6 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="myBacklog.Views.ItemsPage"
              xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             xmlns:effects="clr-namespace:myBacklog.Views.Effects"
+             xmlns:customui="clr-namespace:myBacklog.Views.CustomUI"
              prism:ViewModelLocator.AutowireViewModel="True"
              x:Name="Page"
              Visual="Material"
@@ -66,12 +68,14 @@
             <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
             <Setter Property="BackgroundColor" Value="White"/>
             <Setter Property="Spacing" Value="0"/>
+            <Setter Property="Padding" Value="0, 5, 0, 5"/>
         </Style>
         <!--#endregion-->
         <!--#region Frame-->
         <Style x:Key="FrameStyle" TargetType="Frame">
-            <Setter Property="Padding" Value="0, 5, 0, 5"/>
-            <Setter Property="HasShadow" Value="True"/>
+            <Setter Property="Padding" Value="0, 0, 0, 0"/>
+            <Setter Property="HasShadow" Value="False"/>
+            <Setter Property="BackgroundColor" Value="White"/>
         </Style>
         <!--#endregion-->
         <!--#region BoxView-->
@@ -81,12 +85,11 @@
             <Setter Property="WidthRequest" Value="8"/>
             <Setter Property="HorizontalOptions" Value="Start"/>
         </Style>
-        <Style x:Key="Hack" TargetType="BoxView">
-            <Setter Property="BackgroundColor" Value="Transparent"/>
-            <Setter Property="WidthRequest" Value="25"/>
-            <Setter Property="HeightRequest" Value="25"/>
-            <Setter Property="HorizontalOptions" Value="Start"/>
-            <Setter Property="VerticalOptions" Value="CenterAndExpand"/>
+        <Style x:Key="Border" TargetType="BoxView">
+            <Setter Property="HeightRequest" Value="1"/>
+            <Setter Property="HorizontalOptions" Value="Fill"/>
+            <Setter Property="BackgroundColor" Value="LightGray"/>
+            <Setter Property="Opacity" Value="0.5"/>
         </Style>
         <!--#endregion-->
         <!--#region ImageButton-->
@@ -148,18 +151,22 @@
 
             <Frame x:Name="ButtonsPanel" 
                    Style="{StaticResource FrameStyle}">
-                <StackLayout Style="{StaticResource ButtonsPanelStyle}">
-
-                    <StackLayout Orientation="Horizontal">
-                        <ImageButton x:Name="StatesButton" 
+                <StackLayout Spacing="0">
+                    <BoxView Style="{StaticResource Border}"/>
+                    <StackLayout Style="{StaticResource ButtonsPanelStyle}"
+                             Spacing="0">
+                        <StackLayout Orientation="Horizontal"
+                                 VerticalOptions="CenterAndExpand">
+                            <ImageButton x:Name="StatesButton" 
                                  Style="{StaticResource BottomButtonStyle}"
                                  Source="list"/>
-                        <ImageButton x:Name="NewItemButton" 
+                            <ImageButton x:Name="NewItemButton" 
                                  Style="{StaticResource BottomButtonStyle}"
-                                 Source="add"/>
-                        <ImageButton x:Name="SearchButton" 
+                                 Source="add_round_black"/>
+                            <ImageButton x:Name="SearchButton" 
                                  Style="{StaticResource BottomButtonStyle}"
                                  Source="search"/>
+                        </StackLayout>
                     </StackLayout>
                 </StackLayout>
             </Frame>
@@ -167,9 +174,9 @@
             <Frame x:Name="BottomPanel"
                    Style="{StaticResource FrameStyle}">
                 <StackLayout Style="{StaticResource BottomPanelStyle}">
+                    <BoxView Style="{StaticResource Border}"/>
                     <StackLayout Orientation="Horizontal"
                                  Margin="20, 5, 20, 5">
-                        <BoxView Style="{StaticResource Hack}"/>
                         <Label x:Name="BottomHeader"
                                Style="{StaticResource BottomHeaderStyle}"
                                Text=""
@@ -178,7 +185,8 @@
                                      Style="{StaticResource CancelButtonStyle}"
                                      Clicked="HidePanelButton_Clicked"
                                      IsVisible="True"
-                                     HorizontalOptions="End"/>
+                                     HorizontalOptions="End"
+                                     Command="{Binding Source={x:Reference Page}, Path=BindingContext.ResetPanelItemsCommand}"/>
                     </StackLayout>
 
                     <StackLayout x:Name="NewItemStack"
@@ -235,7 +243,6 @@
                                      BackgroundColor="{Binding Source={x:Reference SearchItemStatePicker}, Path=SelectedItem.Color}"/>
                             <Picker x:Name="SearchItemStatePicker"
                                     Style="{StaticResource PickerStyle}"
-                                    
                                     ItemsSource="{Binding Source={x:Reference Page}, Path=BindingContext.States}"
                                     ItemDisplayBinding="{Binding StateName}"
                                     SelectedIndexChanged="SearchItemStatePicker_SelectedIndexChanged"/>

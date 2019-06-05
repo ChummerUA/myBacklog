@@ -1,4 +1,5 @@
 ﻿using myBacklog.Models;
+using myBacklog.Services;
 using Prism.Mvvm;
 using Prism.Navigation;
 using System;
@@ -36,7 +37,6 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Properties
-        INavigationService NavigationService { get; set; }
         public CategoryModel Category
         {
             get
@@ -101,6 +101,8 @@ namespace myBacklog.ViewModels
             }
         }
 
+        private List<StateModel> DeletedStates { get; set; }
+
         public string Title
         {
             get { return title; }
@@ -138,9 +140,9 @@ namespace myBacklog.ViewModels
         public ICommand ConfirmColorCommand { get; private set; }
         #endregion
 
-        public SetCategoryViewModel(INavigationService navigationService)
+        public SetCategoryViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
         {
-            NavigationService = navigationService;
+            DeletedStates = new List<StateModel>();
             SetCommands();
         }
 
@@ -179,21 +181,19 @@ namespace myBacklog.ViewModels
         public void SetCommands()
         {
             SaveCategoryCommand = new Command(execute: async () => await SaveCategoryAsync());
-            SetCategoryNameCommand = new Command(execute: async () => await SetCategoryNameAsync(),
+            SetCategoryNameCommand = new Command(execute: SetCategoryName,
                 canExecute: CanSetCategoryName);
             GetCategoryCommand = new Command<int?>(execute: async (parameter) => await GetCategoryAsync(parameter));
             DeleteCategoryCommand = new Command(execute: async () => await DeleteCategoryAsync());
 
-            CreateStateCommand = new Command<string>(execute: async (parameter) => await CreateStateAsync(parameter),
-                canExecute: (parameter) => CanCreateState(parameter));
-            SetStateNameCommand = new Command<StateModel>(execute: async (parameter) => await SetStateNameAsync(parameter),
+            CreateStateCommand = new Command(execute: CreateState);
+            SetStateNameCommand = new Command<StateModel>(execute: (parameter) => SetStateName(parameter),
                 canExecute: (parameter) => CanSetStateName(parameter));
-            RemoveStateCommand = new Command<StateModel>(async (parameter) => await RemoveStateAsync(parameter),
-                canExecute: (parameter) => CanRemoveState(parameter));
+            RemoveStateCommand = new Command<StateModel>((parameter) => RemoveState(parameter));
             CancelChangesCommand = new Command(CancelChanges);
 
             ChooseColorCommand = new Command<StateModel>(ChooseColor);
-            ConfirmColorCommand = new Command<NamedColor>(async (parameter) => await ConfirmColorAsync(parameter));
+            ConfirmColorCommand = new Command<NamedColor>((parameter) => ConfirmColor(parameter));
         }
 
         #region Command.Execute()
@@ -205,6 +205,10 @@ namespace myBacklog.ViewModels
             }
 
             var parameters = new NavigationParameters();
+            if (IsUpdated)
+            {
+                parameters.Add("IsUpdated", true);
+            }
 
             if (IsNewCategory)
             {
@@ -214,11 +218,25 @@ namespace myBacklog.ViewModels
                     state.CategoryID = categoryID;
                     await App.Database.CreateStateAsync(state);
                 }
-                parameters.Add("IsUpdated", true);
             }
             else
             {
                 await App.Database.UpdateCategoryAsync(Category);
+                foreach(var state in States)
+                {
+                    if(state.StateID == null)
+                    {
+                        await App.Database.CreateStateAsync(state);
+                    }
+                    else
+                    {
+                        await App.Database.UpdateStateAsync(state);
+                    }
+                }
+                foreach(var state in DeletedStates)
+                {
+                    await App.Database.DeleteStateAsync(state);
+                }
             }
             await NavigationService.GoBackAsync(parameters);
         }
@@ -233,7 +251,7 @@ namespace myBacklog.ViewModels
             }
         }
 
-        private async Task SetCategoryNameAsync()
+        private void SetCategoryName()
         {
             if (!CanSetCategoryName())
             {
@@ -242,7 +260,6 @@ namespace myBacklog.ViewModels
 
             if (!IsNewCategory)
             {
-                await App.Database.UpdateCategoryAsync(Category);
                 IsUpdated = true;
             }
 
@@ -251,25 +268,24 @@ namespace myBacklog.ViewModels
         
         private async Task DeleteCategoryAsync()
         {
-            await App.Database.DeleteCategoryAsync(Category);
-            IsUpdated = true;
+            var delete = await DialogService.DisplayAlert("Delete category", "Are you sure you want to delete category", "Ok", "Cancel");
+            if (delete)
+            {
+                await App.Database.DeleteCategoryAsync(Category);
+                IsUpdated = true;
 
-            var parameters = new NavigationParameters();
-            parameters.Add("IsUpdated", IsUpdated);
+                var parameters = new NavigationParameters();
+                parameters.Add("IsUpdated", IsUpdated);
 
-            await NavigationService.GoBackToRootAsync(parameters);
+                await NavigationService.GoBackToRootAsync(parameters);
+            }
         }
 
-        private async Task CreateStateAsync(string name)
+        private void CreateState()
         {
-            if (!CanCreateState(name))
-            {
-                return;
-            }
-
             StateModel state = new StateModel
             {
-                StateName = name,
+                StateName = "",
                 NamedColor = NamedColor.All.FirstOrDefault(x => x.Name == "Gray"),
             };
             States.Add(state);
@@ -277,14 +293,13 @@ namespace myBacklog.ViewModels
             if (!IsNewCategory)
             {
                 state.CategoryID = Category.CategoryID;
-                await App.Database.CreateStateAsync(state);
                 IsUpdated = true;
             }
 
             SaveChanges();
         }
 
-        private async Task SetStateNameAsync(StateModel state)
+        private void SetStateName(StateModel state)
         {
             if (!CanSetStateName(state))
             {
@@ -293,28 +308,25 @@ namespace myBacklog.ViewModels
 
             if (!IsNewCategory)
             {
-                await App.Database.UpdateStateAsync(state);
                 IsUpdated = true;
             }
 
             SaveChanges();
         }
 
-        private async Task RemoveStateAsync(StateModel state)
+        private void RemoveState(StateModel state)
         {
-            if (!CanRemoveState(state))
-            {
-                return;
-            }
-
             if (!IsNewCategory)
             {
                 IsUpdated = true;
             }
 
-            await App.Database.DeleteStateAsync(state);
-
             States.Remove(state);
+            if(state.StateID != null)
+            {
+                DeletedStates.Add(state);
+            }
+
             SaveChanges();
         }
 
@@ -328,14 +340,13 @@ namespace myBacklog.ViewModels
             NavigationService.NavigateAsync("SetColorPage", parameters);
         }
 
-        private async Task ConfirmColorAsync(NamedColor color)
+        private void ConfirmColor(NamedColor color)
         {
             var i = States.IndexOf(EditState);
             States[i].NamedColor = color;
 
             if (!IsNewCategory)
             {
-                await App.Database.UpdateStateAsync(States[i]);
                 IsUpdated = true;
             }
 
@@ -390,6 +401,11 @@ namespace myBacklog.ViewModels
                 return false;
             }
 
+            if(States.FirstOrDefault(x => x.StateName == "") != null)
+            {
+                return false;
+            }
+
             var isAwailable = App.Database.IsCategoryNameAwailable(Category);
 
             return isAwailable;
@@ -434,15 +450,6 @@ namespace myBacklog.ViewModels
                 return false;
             }
 
-            return true;
-        }
-
-        private bool CanRemoveState(StateModel state)
-        {
-            if (!IsNewCategory && States.Count == 1)
-            {
-                return false;
-            }
             return true;
         }
         #endregion

@@ -1,4 +1,5 @@
 ﻿using myBacklog.Models;
+using myBacklog.Services;
 using Prism.Navigation;
 using System;
 using System.Collections.Generic;
@@ -14,8 +15,6 @@ namespace myBacklog.ViewModels
     public class SetColorViewModel : BaseViewModel
     {
         #region Properties
-        INavigationService NavigationService { get; set; }
-
         public ObservableCollection<NamedColor> Colors { get; set; }
 
         public NamedColor SelectedColor { get; set; }
@@ -23,10 +22,8 @@ namespace myBacklog.ViewModels
 
         public ICommand ConfirmColorCommand { get; }
 
-        public SetColorViewModel(INavigationService navigationService)
+        public SetColorViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
         {
-            NavigationService = navigationService;
-
             Colors = new ObservableCollection<NamedColor>();
             var colors = NamedColor.All;
 

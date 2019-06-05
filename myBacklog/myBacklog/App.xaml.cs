@@ -13,6 +13,7 @@ using Prism;
 using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Navigation;
+using myBacklog.Services;
 
 [assembly: XamlCompilation(XamlCompilationOptions.Compile)]
 namespace myBacklog
@@ -46,6 +47,9 @@ namespace myBacklog
 
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
+            containerRegistry.Register<IDialog, DialogService>();
+
+
             containerRegistry.RegisterForNavigation<NavigationPage>();
             containerRegistry.RegisterForNavigation<CategoriesPage, CategoriesViewModel>();
             containerRegistry.RegisterForNavigation<SetCategoryPage, SetCategoryViewModel>();

@@ -72,7 +72,7 @@ namespace myBacklog.Views
             StatePicker.SelectedIndex = 0;
             StatePicker.SelectedIndexChanged += StatePicker_SelectedIndexChanged;
 
-            if (BottomPanel.IsVisible)
+            if (BottomPanel.Height != 0)
             {
                 BottomPanel.MinimumHeightRequest = BottomPanel.Height;
                 ButtonsPanel.MinimumHeightRequest = ButtonsPanel.Height;
@@ -86,8 +86,9 @@ namespace myBacklog.Views
 
         protected override bool OnBackButtonPressed()
         {
-            if (!ButtonsPanel.IsVisible)
+            if (ButtonsPanel.HeightRequest != ButtonsPanel.MinimumHeightRequest)
             {
+                HidePanelButton.Command.Execute(null);
                 HideBottomPanel();
                 return true;
             }
@@ -341,26 +342,19 @@ namespace myBacklog.Views
     {
         public static async Task Hide(this View obj, uint length)
         {
-            await obj.LayoutTo(new Rectangle
-            {
-                Width = obj.Width,
-                Height = 0,
-                X = obj.X,
-                Y = obj.Y + obj.Height
-            }, length);
-            obj.IsVisible = false;
+            var source = new TaskCompletionSource<bool>();
+            var hideAnimation = new Animation((v) => obj.HeightRequest = v, obj.HeightRequest, 0, finished: () => source.TrySetResult(true));
+            hideAnimation.Commit(obj, "Hide", length:length, finished: (v, c) => source.TrySetResult(true));
+            await source.Task;
         }
 
         public static async Task Show(this View obj, uint length)
         {
-            obj.IsVisible = true;
-            await obj.LayoutTo(new Rectangle
-            {
-                Width = obj.Width,
-                Height = obj.MinimumHeightRequest,
-                X = obj.X,
-                Y = obj.Y - obj.MinimumHeightRequest
-            }, length);
+            var source = new TaskCompletionSource<bool>();
+            //var request = obj.Measure(obj.Width, double.PositiveInfinity);
+            //var h = request.Request.Height;
+            var showAnimation = new Animation((v) => obj.HeightRequest = v, 0, obj.MinimumHeightRequest);
+            showAnimation.Commit(obj, "Show", length:length, finished: (v, c) => source.TrySetResult(true));
         }
     }
 }
