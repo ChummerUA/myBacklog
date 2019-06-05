@@ -1,4 +1,5 @@
 ﻿using myBacklog.Models;
+using Prism.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -11,7 +12,7 @@ using Xamarin.Forms;
 
 namespace myBacklog.ViewModels
 {
-    public class ItemsViewModel : INotifyPropertyChanged
+    public class ItemsViewModel : BaseViewModel, INotifyPropertyChanged
     {
         #region Variables
         CategoryModel category;
@@ -38,6 +39,8 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Properties
+        INavigationService NavigationService { get; set; }
+
         public CategoryModel Category
         {
             get
@@ -177,11 +180,12 @@ namespace myBacklog.ViewModels
         public ICommand ShowItemsCommand { get; }
         public ICommand LoadMoreCommand { get; }
         public ICommand SetItemNameCommand { get; }
+        public ICommand CategorySettingsCommand { get; }
         #endregion
 
-        public ItemsViewModel(CategoryModel c)
+        public ItemsViewModel(INavigationService navigationService)
         {
-            Category = c;
+            NavigationService = navigationService;
 
             UpdateModelCommand = new Command(async () => await UpdateModelAsync());
             SetEditItemCommand = new Command<ItemModel>((parameter) => SetEditItem(parameter));
@@ -195,6 +199,24 @@ namespace myBacklog.ViewModels
             LoadMoreCommand = new Command(execute: async () => await LoadMoreAsync());
             SetItemNameCommand = new Command<ItemModel>(execute:(parameter) => SetItemName(parameter),
                 canExecute: (parameter) => CanSetItemName(parameter));
+            CategorySettingsCommand = new Command(async () => await OpenCategorySettingsAsync());
+        }
+
+        public override void OnNavigatingTo(INavigationParameters parameters)
+        {
+            if (parameters.ContainsKey("category"))
+            {
+                var c = parameters.GetValue<CategoryModel>("category");
+                Category = c;
+                UpdateModelCommand.Execute(null);
+            }
+            else
+            {
+                if (parameters.ContainsKey("IsUpdated"))
+                {
+                    UpdateModelCommand.Execute(null);
+                }
+            }
         }
 
         #region Execute()
@@ -354,6 +376,14 @@ namespace myBacklog.ViewModels
             }
 
             IsItemsLoading = false;
+        }
+
+        private async Task OpenCategorySettingsAsync()
+        {
+            var parameters = new NavigationParameters();
+            parameters.Add("categoryID", Category.CategoryID);
+
+            await NavigationService.NavigateAsync("SetCategoryPage", parameters);
         }
         #endregion
 

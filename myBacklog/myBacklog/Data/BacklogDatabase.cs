@@ -1,4 +1,5 @@
 ﻿using myBacklog.Models;
+using myBacklog.Services;
 using SQLite;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace myBacklog.Data
 {
-    public class BacklogDatabase
+    public class BacklogDatabase : IDatabase
     {
         readonly SQLiteAsyncConnection database;
 
@@ -22,7 +23,7 @@ namespace myBacklog.Data
                 database.CreateTableAsync<ItemModel>());
         }
 
-        #region Category
+        #region Categories
         public bool IsCategoryNameAwailable(CategoryModel category)
         {
             var result = database.Table<CategoryModel>()

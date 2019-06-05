@@ -16,11 +16,10 @@ namespace myBacklog.Views
     {
         public SetColorViewModel ViewModel { get; set; }
 
-        public SetColorPage(SetColorViewModel viewModel)
+        public SetColorPage()
         {
             InitializeComponent();
-            ViewModel = viewModel;
-            BindingContext = ViewModel;
+            ViewModel = BindingContext as SetColorViewModel;
         }
 
         protected override void OnAppearing()
@@ -48,11 +47,7 @@ namespace myBacklog.Views
         {
             if(e.SelectedItem != null)
             {
-                var page = Navigation.NavigationStack.FirstOrDefault(x => x.GetType() == typeof(SetCategoryPage)) as SetCategoryPage;
-                
-                page.ViewModel.ConfirmColorCommand.Execute(e.SelectedItem);
-                
-                await Navigation.PopAsync();
+                ViewModel.ConfirmColorCommand.Execute(e.SelectedItem as NamedColor);
             }
         }
     }

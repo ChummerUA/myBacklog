@@ -38,27 +38,15 @@ namespace myBacklog.Views
             }
         }
 
-        public SetCategoryPage(SetCategoryViewModel vm)
+        public SetCategoryPage()
         {
             InitializeComponent();
 
-            ViewModel = vm;
-            BindingContext = ViewModel;
+            ViewModel = BindingContext as SetCategoryViewModel;
 
             if (ViewModel.IsNewCategory)
             {
-                CategoryNameEntry.Placeholder = "New category";
-                Title = "New category";
-            }
-            else
-            {
-                ViewModel.GetCategoryCommand.Execute(null);
-            }
-
-
-            if (ViewModel.IsNewCategory)
-            {
-                ConfirmCommand = new Command(execute: async () => await SaveAsync());
+                ConfirmCommand = ViewModel.SaveCategoryCommand;
 
                 var item = Resources["ConfirmCategory"] as ToolbarItem;
                 item.Command = ConfirmCommand;
@@ -73,15 +61,6 @@ namespace myBacklog.Views
                 item.Command = DeleteCommand;
 
                 ToolbarItems.Add(item);
-            }
-        }
-
-        private async Task SaveAsync()
-        {
-            if (ViewModel.SaveCategoryCommand.CanExecute(null))
-            {
-                ViewModel.SaveCategoryCommand.Execute(null);
-                await Navigation.PopAsync();
             }
         }
 
@@ -228,29 +207,5 @@ namespace myBacklog.Views
             }
         }
         #endregion
-
-        private async void ColorBox_Tapped(object sender, EventArgs e)
-        {
-            var colors = new List<System.Drawing.Color>();
-            foreach(var state in ViewModel.States)
-            {
-                colors.Add(state.Color);
-            }
-
-            var namedColors = new ObservableCollection<NamedColor>();
-            foreach(var color in colors)
-            {
-                namedColors.Add(NamedColor.All.FirstOrDefault(x => x.Color.A == color.A &&
-                x.Color.B == color.B &&
-                x.Color.G == color.B &&
-                x.Color.R == color.R));
-            }
-
-            var selectedColor = ViewModel.EditState.NamedColor;
-
-            var viewModel = new SetColorViewModel(namedColors, selectedColor);
-
-            await Navigation.PushAsync(new SetColorPage(viewModel));
-        }
     }
 }

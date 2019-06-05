@@ -1,4 +1,6 @@
 ﻿using myBacklog.Models;
+using Prism.Mvvm;
+using Prism.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,12 +14,13 @@ using Xamarin.Forms;
 
 namespace myBacklog.ViewModels
 {
-    public class SetCategoryViewModel : INotifyPropertyChanged
+    public class SetCategoryViewModel : BaseViewModel, INotifyPropertyChanged
     {
         CategoryModel category;
         CategoryModel savedCategory;
         ObservableCollection<StateModel> states;
         ObservableCollection<StateModel> savedStates;
+        string title;
 
         #region PropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
@@ -33,6 +36,7 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Properties
+        INavigationService NavigationService { get; set; }
         public CategoryModel Category
         {
             get
@@ -97,9 +101,24 @@ namespace myBacklog.ViewModels
             }
         }
 
+        public string Title
+        {
+            get { return title; }
+            set
+            {
+                if (title != value)
+                {
+                    title = value;
+                    OnPropertyChanged("Title");
+                }
+            }
+        }
+
         public StateModel EditState { get; set; }
 
-        public bool IsNewCategory { get; set; }
+        public bool IsNewCategory { get; set; } = true;
+
+        public bool IsUpdated { get; set; } = false;
         #endregion
 
         #region ICommand
@@ -119,44 +138,50 @@ namespace myBacklog.ViewModels
         public ICommand ConfirmColorCommand { get; private set; }
         #endregion
 
-        public SetCategoryViewModel(CategoryModel c, List<StateModel> s)
+        public SetCategoryViewModel(INavigationService navigationService)
         {
+            NavigationService = navigationService;
             SetCommands();
-
-            Category = c;
-            SavedCategory = c;
-
-            States = new ObservableCollection<StateModel>(s);
-            SavedStates = new ObservableCollection<StateModel>(s);
-
-            IsNewCategory = false;
         }
 
-        public SetCategoryViewModel()
+        public override void OnNavigatingTo(INavigationParameters parameters)
         {
-            SetCommands();
-            Category = new CategoryModel
+            if (parameters.ContainsKey("color"))
             {
-                CategoryName = "",
-            };
-            SavedCategory = new CategoryModel
+                var color = parameters["color"] as NamedColor;
+                ConfirmColorCommand.Execute(color);
+            }
+            else if(parameters.ContainsKey("categoryID"))
             {
-                CategoryName = "",
-            };
+                IsNewCategory = false;
+                var categoryID = parameters["categoryID"] as int?;
+                GetCategoryCommand.Execute(categoryID);
+            }
+            else
+            {
+                Category = new CategoryModel
+                {
+                    CategoryName = "",
+                };
+                SavedCategory = new CategoryModel
+                {
+                    CategoryName = "",
+                };
 
-            States = new ObservableCollection<StateModel>();
-            SavedStates = new ObservableCollection<StateModel>();
+                States = new ObservableCollection<StateModel>();
+                SavedStates = new ObservableCollection<StateModel>();
 
-            IsNewCategory = true;
+                IsNewCategory = true;
+                Title = "New category";
+            }
         }
 
         public void SetCommands()
         {
-            SaveCategoryCommand = new Command(execute: async () => await SaveCategoryAsync(),
-                canExecute: CanSaveCategory);
+            SaveCategoryCommand = new Command(execute: async () => await SaveCategoryAsync());
             SetCategoryNameCommand = new Command(execute: async () => await SetCategoryNameAsync(),
                 canExecute: CanSetCategoryName);
-            GetCategoryCommand = new Command(execute: async () => await GetCategoryAsync());
+            GetCategoryCommand = new Command<int?>(execute: async (parameter) => await GetCategoryAsync(parameter));
             DeleteCategoryCommand = new Command(execute: async () => await DeleteCategoryAsync());
 
             CreateStateCommand = new Command<string>(execute: async (parameter) => await CreateStateAsync(parameter),
@@ -178,6 +203,9 @@ namespace myBacklog.ViewModels
             {
                 return;
             }
+
+            var parameters = new NavigationParameters();
+
             if (IsNewCategory)
             {
                 var categoryID = await App.Database.CreateCategoryAsync(Category);
@@ -186,18 +214,22 @@ namespace myBacklog.ViewModels
                     state.CategoryID = categoryID;
                     await App.Database.CreateStateAsync(state);
                 }
+                parameters.Add("IsUpdated", true);
             }
             else
             {
                 await App.Database.UpdateCategoryAsync(Category);
             }
+            await NavigationService.GoBackAsync(parameters);
         }
 
-        private async Task GetCategoryAsync()
+        private async Task GetCategoryAsync(int? categoryID)
         {
             if (!IsNewCategory)
             {
-                Category = await App.Database.GetCategoryAsync((int)Category.CategoryID);
+                Category = await App.Database.GetCategoryAsync((int)categoryID);
+                States = new ObservableCollection<StateModel>(await App.Database.GetStatesAsync((int)categoryID));
+                Title = Category.CategoryName;
             }
         }
 
@@ -211,6 +243,7 @@ namespace myBacklog.ViewModels
             if (!IsNewCategory)
             {
                 await App.Database.UpdateCategoryAsync(Category);
+                IsUpdated = true;
             }
 
             SaveChanges();
@@ -219,6 +252,12 @@ namespace myBacklog.ViewModels
         private async Task DeleteCategoryAsync()
         {
             await App.Database.DeleteCategoryAsync(Category);
+            IsUpdated = true;
+
+            var parameters = new NavigationParameters();
+            parameters.Add("IsUpdated", IsUpdated);
+
+            await NavigationService.GoBackToRootAsync(parameters);
         }
 
         private async Task CreateStateAsync(string name)
@@ -239,6 +278,7 @@ namespace myBacklog.ViewModels
             {
                 state.CategoryID = Category.CategoryID;
                 await App.Database.CreateStateAsync(state);
+                IsUpdated = true;
             }
 
             SaveChanges();
@@ -254,6 +294,7 @@ namespace myBacklog.ViewModels
             if (!IsNewCategory)
             {
                 await App.Database.UpdateStateAsync(state);
+                IsUpdated = true;
             }
 
             SaveChanges();
@@ -266,6 +307,11 @@ namespace myBacklog.ViewModels
                 return;
             }
 
+            if (!IsNewCategory)
+            {
+                IsUpdated = true;
+            }
+
             await App.Database.DeleteStateAsync(state);
 
             States.Remove(state);
@@ -275,6 +321,11 @@ namespace myBacklog.ViewModels
         private void ChooseColor(StateModel state)
         {
             EditState = state;
+
+            var parameters = new NavigationParameters();
+            parameters.Add("state", state);
+
+            NavigationService.NavigateAsync("SetColorPage", parameters);
         }
 
         private async Task ConfirmColorAsync(NamedColor color)
@@ -285,6 +336,7 @@ namespace myBacklog.ViewModels
             if (!IsNewCategory)
             {
                 await App.Database.UpdateStateAsync(States[i]);
+                IsUpdated = true;
             }
 
             EditState = null;
@@ -323,6 +375,11 @@ namespace myBacklog.ViewModels
         #region Command.CanExecute()
         private bool CanSaveCategory()
         {
+            if (Category == null)
+            {
+                return false;
+            }
+
             if(Category.CategoryName == "" || Category.CategoryName == null)
             {
                 return false;

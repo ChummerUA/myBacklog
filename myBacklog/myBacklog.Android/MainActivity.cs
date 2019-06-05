@@ -7,6 +7,10 @@ using Android.Views;
 using Android.Widget;
 using Android.OS;
 
+using Unity;
+using Prism;
+using Prism.Ioc;
+
 namespace myBacklog.Droid
 {
     [Activity(Label = "myBacklog", Icon = "@mipmap/icon", Theme = "@style/MainTheme", MainLauncher = true, ConfigurationChanges = ConfigChanges.ScreenSize | ConfigChanges.Orientation)]
@@ -20,7 +24,15 @@ namespace myBacklog.Droid
             base.OnCreate(savedInstanceState);
             global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
             global::Xamarin.Forms.FormsMaterial.Init(this, savedInstanceState);
-            LoadApplication(new App());
+            LoadApplication(new myBacklog.App(new AndroidPlatformInitializer()));
+        }
+    }
+
+    public class AndroidPlatformInitializer : IPlatformInitializer
+    {
+        public void RegisterTypes(IContainerRegistry containerRegistry)
+        {
+            
         }
     }
 }

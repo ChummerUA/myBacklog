@@ -46,11 +46,12 @@ namespace myBacklog.Views
         }
         #endregion
 
-        public ItemsPage(ItemsViewModel vm)
+        public ItemsPage()
         {
             InitializeComponent();
 
-            CategorySettingsCommand = new Command(async () => await CategorySettingsAsync());
+            ViewModel = BindingContext as ItemsViewModel;
+
             NewItemPanelCommand = new Command(ShowNewItemPanel);
             SearchItemPanelCommand = new Command(ShowSearchItemPanel);
             HidePanelCommand = new Command(() => HideBottomPanel());
@@ -60,8 +61,6 @@ namespace myBacklog.Views
             SearchButton.Command = SearchItemPanelCommand;
             StatesButton.Command = StatesCommand;
 
-            ViewModel = vm;
-            BindingContext = ViewModel;
             SetToolbar();
         }
 
@@ -69,7 +68,6 @@ namespace myBacklog.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            ViewModel.UpdateModelCommand.Execute(null);
 
             StatePicker.SelectedIndex = 0;
             StatePicker.SelectedIndexChanged += StatePicker_SelectedIndexChanged;
@@ -121,17 +119,15 @@ namespace myBacklog.Views
             var states = ViewModel.States.ToList();
             states.RemoveAt(0);
 
-            var viewModel = new SetCategoryViewModel(ViewModel.Category, states);
-            var page = new SetCategoryPage(viewModel);
+            //var viewModel = new SetCategoryViewModel(ViewModel.Category, states);
 
-            await Navigation.PushAsync(page);
+            //await Navigation.PushAsync(page);
         }
 
         #region Toolbar
         private void SetToolbar()
         {
             var settings = Resources["SettingsButton"] as ToolbarItem;
-            settings.Command = CategorySettingsCommand;
             ToolbarItems.Add(settings);
         }
 

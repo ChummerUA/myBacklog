@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Foundation;
+using Prism;
+using Prism.Ioc;
 using UIKit;
+using Unity;
 
 namespace myBacklog.iOS
 {
@@ -24,9 +27,17 @@ namespace myBacklog.iOS
         {
             global::Xamarin.Forms.Forms.Init();
             global::Xamarin.Forms.FormsMaterial.Init();
-            LoadApplication(new App());
+            LoadApplication(new myBacklog.App(new iOSPlatformInitializer())); 
 
             return base.FinishedLaunching(app, options);
+        }
+    }
+
+    public class iOSPlatformInitializer : IPlatformInitializer
+    {
+        public void RegisterTypes(IContainerRegistry containerRegistry)
+        {
+            
         }
     }
 }

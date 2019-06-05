@@ -9,11 +9,15 @@ using myBacklog.ViewModels;
 using myBacklog.Models;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using Prism;
+using Prism.DryIoc;
+using Prism.Ioc;
+using Prism.Navigation;
 
 [assembly: XamlCompilation(XamlCompilationOptions.Compile)]
 namespace myBacklog
 {
-    public partial class App : Application
+    public partial class App : PrismApplication
     {
         static BacklogDatabase database;
 
@@ -29,26 +33,24 @@ namespace myBacklog
             }
         }
 
-        public App()
+        public App() : this(null) { }
+
+        public App(IPlatformInitializer initializer) : base(initializer) { }
+
+        protected override async void OnInitialized()
         {
             InitializeComponent();
 
-            MainPage = new NavigationPage(new CategoriesPage());
+            await NavigationService.NavigateAsync("NavigationPage/CategoriesPage");
         }
 
-        protected override void OnStart()
+        protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
-            // Handle when your app starts
-        }
-
-        protected override void OnSleep()
-        {
-            // Handle when your app sleeps
-        }
-
-        protected override void OnResume()
-        {
-            // Handle when your app resumes
+            containerRegistry.RegisterForNavigation<NavigationPage>();
+            containerRegistry.RegisterForNavigation<CategoriesPage, CategoriesViewModel>();
+            containerRegistry.RegisterForNavigation<SetCategoryPage, SetCategoryViewModel>();
+            containerRegistry.RegisterForNavigation<ItemsPage, ItemsViewModel>();
+            containerRegistry.RegisterForNavigation<SetColorPage, SetColorViewModel>();
         }
     }
 }

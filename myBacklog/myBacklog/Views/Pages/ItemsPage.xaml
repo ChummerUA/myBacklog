@@ -2,6 +2,8 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="myBacklog.Views.ItemsPage"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
              x:Name="Page"
              Visual="Material"
              Title="{Binding Source={x:Reference Page}, Path=BindingContext.Category.CategoryName}">
@@ -117,7 +119,8 @@
         <!--#endregion-->
 
         <ToolbarItem x:Key="SettingsButton"
-                     Icon="settings_white"/>
+                     Icon="settings_white"
+                     Command="{Binding Source={x:Reference Page}, Path=BindingContext.CategorySettingsCommand}"/>
     </ContentPage.Resources>
     <ContentPage.Content>
         <StackLayout x:Name="Main"
@@ -127,7 +130,8 @@
                       ItemsSource="{Binding Items}"
                       ItemSelected="ItemsListView_ItemSelected"
                       ItemAppearing="ItemListView_ItemAppearing"
-                      IsRefreshing="{Binding Source={x:Reference Page}, Path=BindingContext.IsItemsLoading}">
+                      IsRefreshing="{Binding Source={x:Reference Page}, Path=BindingContext.IsItemsLoading}"
+                      VerticalOptions="FillAndExpand">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>

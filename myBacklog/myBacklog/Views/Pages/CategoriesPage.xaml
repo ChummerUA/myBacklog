@@ -3,6 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="myBacklog.Views.CategoriesPage"
              xmlns:ViewModels="clr-namespace:myBacklog.ViewModels"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
              Title="Backlog"
              x:Name="Page">
     <ContentPage.Resources>
@@ -60,7 +62,7 @@
                    Margin="0, 0, 0, 15">
                 <ImageButton Style="{StaticResource ButtonStyle}"
                          x:Name="AddCategoryButton"
-                         Command="{Binding Source={x:Reference Page}, Path=CreateCategoryCommand}"/>
+                         Command="{Binding Source={x:Reference Page}, Path=BindingContext.CreateCategoryCommand}"/>
             </Frame>
         </Grid>
     </ContentPage.Content>

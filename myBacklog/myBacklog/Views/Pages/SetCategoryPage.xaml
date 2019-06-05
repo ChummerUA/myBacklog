@@ -2,6 +2,8 @@
 <ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:viewmodels="clr-namespace:myBacklog.ViewModels"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"                          
+             prism:ViewModelLocator.AutowireViewModel="True"
              x:Class="myBacklog.Views.SetCategoryPage"
              x:Name="Page"
              Visual="Material"
@@ -83,8 +85,7 @@
                                     <BoxView Style="{StaticResource StateColor}">
                                         <BoxView.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding Path=BindingContext.ChooseColorCommand, Source={x:Reference Name=Page}}"
-                                                                  CommandParameter="{Binding .}"
-                                                                  Tapped="ColorBox_Tapped"/>
+                                                                  CommandParameter="{Binding .}"/>
                                         </BoxView.GestureRecognizers>
                                     </BoxView>
                                     <Entry Style="{StaticResource StateEntryStyle}"
