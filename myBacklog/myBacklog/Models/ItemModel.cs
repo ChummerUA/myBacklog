@@ -1,4 +1,6 @@
-﻿using SQLite;
+﻿using Plugin.CloudFirestore.Attributes;
+using Prism.Mvvm;
+using SQLite;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,109 +9,54 @@ using System.Text;
 
 namespace myBacklog.Models
 {
-    public class ItemModel : INotifyPropertyChanged
+    public class ItemModel : BindableBase
     {
         #region Variables
-        int? itemID;
-        string itemName;
-        int? categoryID;
-        int? stateID;
-        StateModel state;
+        private string itemID;
+        private string itemName;
+        private string categoryID;
+        private string stateID;
+        private StateModel state;
+        private int id;
         #endregion
 
-        #region PropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void OnPropertyChanged(string name)
+        #region ID
+        public string ItemID
         {
-            var changed = PropertyChanged;
-            if(changed != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
-            }
+            get => itemID;
+            set => SetProperty(ref itemID, value);
+        }
+
+        public string CategoryID
+        {
+            get => categoryID;
+            set => SetProperty(ref categoryID, value);
+        }
+
+        public string StateID
+        {
+            get => categoryID;
+            set => SetProperty(ref stateID, value);
+        }
+
+        public int ID
+        {
+            get => id;
+            set => SetProperty(ref id, value);
         }
         #endregion
-
-        [PrimaryKey, AutoIncrement] 
-        public int? ItemID
-        {
-            get
-            {
-                return itemID;
-            }
-            set
-            {
-                if(itemID != value)
-                {
-                    itemID = value;
-                    OnPropertyChanged("ItemID");
-                }
-            }
-        }
 
         public string ItemName
         {
-            get
-            {
-                return itemName;
-            }
-            set
-            {
-                if(itemName != value)
-                {
-                    itemName = value;
-                    OnPropertyChanged("ItemName");
-                }
-            }
-        }
-        
-        public int? CategoryID
-        {
-            get
-            {
-                return categoryID;
-            }
-            set
-            {
-                if(categoryID != value)
-                {
-                    categoryID = value;
-                    OnPropertyChanged("CategoryID");
-                }
-            }
-        }
-
-        public int? StateID
-        {
-            get
-            {
-                return stateID;
-            }
-            set
-            {
-                if(stateID != value)
-                {
-                    stateID = value;
-                    OnPropertyChanged("StateID");
-                }
-            }
+            get => itemName;
+            set => SetProperty(ref itemName, value);
         }
 
         [Ignore]
         public StateModel State
         {
-            get
-            {
-                return state;
-            }
-            set
-            {
-                if(value != state)
-                {
-                    state = value;
-                    OnPropertyChanged("State");
-                }
-            }
+            get => state;
+            set => SetProperty(ref state, value);
         }
     }
 }

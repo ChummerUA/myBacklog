@@ -54,7 +54,7 @@ namespace myBacklog.ViewModels
         public ICommand OpenCategoryCommand { get; }
         #endregion
 
-        public CategoriesViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
+        public CategoriesViewModel(INavigationService navigationService, IDialog dialogService, IFirebase databaseService) : base(navigationService, dialogService, databaseService)
         {
             UpdateCategoriesCommand = new Command(async () => await UpdateCategoriesAsync());
             CreateCategoryCommand = new Command(async () => await CreateCategoryAsync());
@@ -73,7 +73,7 @@ namespace myBacklog.ViewModels
 
         private async Task UpdateCategoriesAsync()
         {
-            var categoriesList = await App.Database.GetCategoriesAsync();
+            var categoriesList = await FirebaseService.GetCategoriesAsync();
 
             if(categoriesList == null)
             {

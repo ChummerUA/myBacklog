@@ -6,80 +6,45 @@ using SQLite;
 using System.Linq;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using Prism.Mvvm;
+using Plugin.CloudFirestore.Attributes;
 
 namespace myBacklog.Models
 {
-    public class StateModel : INotifyPropertyChanged
+    public class StateModel : BindableBase
     {
         #region Variables
-        int? stateID;
-        string stateName;
-        NamedColor namedColor;
-        int? categoryID;
+        private string stateID;
+        private string stateName;
+        private NamedColor namedColor;
+        private string categoryID;
+        private int id;
         #endregion
 
-        #region PropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void OnPropertyChanged(string name)
+        #region ID
+        public string StateID
         {
-            var changed = PropertyChanged;
-            if (changed != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
-            }
+            get => stateID;
+            set => SetProperty(ref stateID, value);
+        }
+
+        public string CategoryID
+        {
+            get => categoryID;
+            set => SetProperty(ref categoryID, value);
+        }
+
+        public int ID
+        {
+            get => id;
+            set => SetProperty(ref id, value);
         }
         #endregion
-
-        [PrimaryKey, AutoIncrement]
-        public int? StateID
-        {
-            get
-            {
-                return stateID;
-            }
-            set
-            {
-                if (value != stateID)
-                {
-                    stateID = value;
-                    OnPropertyChanged("StateID");
-                }
-            }
-        }
 
         public string StateName
         {
-            get
-            {
-                return stateName;
-            }
-            set
-            {
-                if (value != stateName)
-                {
-                    stateName = value;
-                    OnPropertyChanged("StateName");
-                }
-            }
-        }
-
-        [Ignore]
-        public NamedColor NamedColor
-        {
-            get
-            {
-                return namedColor;
-            }
-            set
-            {
-                if(value != namedColor)
-                {
-                    namedColor = value;
-                    OnPropertyChanged("NamedColor");
-                    OnPropertyChanged("Color");
-                }
-            }
+            get => stateName;
+            set => SetProperty(ref stateName, value);
         }
 
         public string ColorName
@@ -94,29 +59,27 @@ namespace myBacklog.Models
             }
         }
 
-        [Ignore]
-        public Color Color
+        #region Ignored
+        [Ignored]
+        public NamedColor NamedColor
         {
-            get
-            {
-                return NamedColor.Color;
-            }
-        }
-
-        public int? CategoryID
-        {
-            get
-            {
-                return categoryID;
-            }
+            get => namedColor;
             set
             {
-                if(categoryID != value)
+                if(value != namedColor)
                 {
-                    categoryID = value;
-                    OnPropertyChanged("CategoryID");
+                    namedColor = value;
+                    OnPropertyChanged("NamedColor");
+                    OnPropertyChanged("Color");
                 }
             }
         }
+
+        [Ignored]
+        public Color Color
+        {
+            get => NamedColor.Color;
+        }
+        #endregion
     }
 }

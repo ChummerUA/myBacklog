@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "373029480160",
+    "firebase_url": "https://mybacklog-8ce5a.firebaseio.com",
+    "project_id": "mybacklog-8ce5a",
+    "storage_bucket": "mybacklog-8ce5a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:373029480160:android:9d7fb5390b030531",
+        "android_client_info": {
+          "package_name": "com.companyname.myBacklog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "373029480160-636u8ai0l9qv4qeari54b1f51d2a1ge8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhZNAlc48br9h1vywRwB79PEPSMJ58YkE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "373029480160-636u8ai0l9qv4qeari54b1f51d2a1ge8.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "373029480160-psn6ev97ugj9b4naingfmicbqqu9jh9m.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "myBacklog.iOS"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

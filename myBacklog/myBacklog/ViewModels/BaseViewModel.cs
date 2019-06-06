@@ -10,11 +10,13 @@ namespace myBacklog.ViewModels
     {
         protected INavigationService NavigationService { get; }
         protected IDialog DialogService { get; }
+        protected IFirebase FirebaseService { get; }
 
-        public BaseViewModel(INavigationService navigationService, IDialog dialogService)
+        public BaseViewModel(INavigationService navigationService, IDialog dialogService, IFirebase firebaseService)
         {
             NavigationService = navigationService;
             DialogService = dialogService;
+            FirebaseService = firebaseService;
         }
 
         public virtual void OnNavigatedFrom(INavigationParameters parameters)

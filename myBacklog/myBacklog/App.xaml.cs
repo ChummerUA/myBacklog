@@ -3,7 +3,6 @@ using System;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 using SQLitePCL;
-using myBacklog.Data;
 using System.IO;
 using myBacklog.ViewModels;
 using myBacklog.Models;
@@ -14,26 +13,13 @@ using Prism.DryIoc;
 using Prism.Ioc;
 using Prism.Navigation;
 using myBacklog.Services;
+using Plugin.CloudFirestore;
 
 [assembly: XamlCompilation(XamlCompilationOptions.Compile)]
 namespace myBacklog
 {
     public partial class App : PrismApplication
     {
-        static BacklogDatabase database;
-
-        public static BacklogDatabase Database
-        {
-            get
-            {
-                if(database == null)
-                {
-                    database = new BacklogDatabase(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BacklogDBSQLite.db3"));
-                }
-                return database;
-            }
-        }
-
         public App() : this(null) { }
 
         public App(IPlatformInitializer initializer) : base(initializer) { }
@@ -48,6 +34,8 @@ namespace myBacklog
         protected override void RegisterTypes(IContainerRegistry containerRegistry)
         {
             containerRegistry.Register<IDialog, DialogService>();
+            containerRegistry.Register<IFirebase, FirebaseService>();
+            //containerRegistry.Register<IDatabase, BacklogDatabase>();
 
 
             containerRegistry.RegisterForNavigation<NavigationPage>();

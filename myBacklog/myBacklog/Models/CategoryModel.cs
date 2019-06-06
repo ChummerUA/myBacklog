@@ -1,4 +1,5 @@
-﻿using SQLite;
+﻿using Plugin.CloudFirestore.Attributes;
+using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -7,75 +8,40 @@ using System.Text;
 
 namespace myBacklog.Models
 {
-    public class CategoryModel : INotifyPropertyChanged
+    public class CategoryModel : BindableBase
     {
         #region Variables
-        private int? id;
+        private string categoryId;
         private string categoryName;
         private ObservableCollection<ItemModel> items;
+        private int id;
         #endregion
 
-        #region PropertyChanged
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private void OnPropertyChanged(string name)
+        #region ID
+        public string CategoryID
         {
-            var changed = PropertyChanged;
-            if(changed != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(name));
-            }
+            get => categoryId;
+            set => SetProperty(ref categoryId, value);
+        }
+
+        public int ID
+        {
+            get => id;
+            set => SetProperty(ref id, value);
         }
         #endregion
-
-        [PrimaryKey, AutoIncrement]
-        public int? CategoryID
-        {
-            get
-            {
-                return id;
-            }
-            set
-            {
-                if(value != id)
-                {
-                    id = value;
-                    OnPropertyChanged("CategoryID");
-                }
-            }
-        }
 
         public string CategoryName
         {
-            get
-            {
-                return categoryName;
-            }
-            set
-            {
-                if(value != categoryName)
-                {
-                    categoryName = value;
-                    OnPropertyChanged("CategoryName");
-                }
-            }
+            get => categoryName;
+            set => SetProperty(ref categoryName, value);
         }
         
-        [Ignore]
+        [Ignored]
         public ObservableCollection<ItemModel> Items
         {
-            get
-            {
-                return items;
-            }
-            set
-            {
-                if(value != items)
-                {
-                    items = value;
-                    OnPropertyChanged("Items");
-                }
-            }
+            get => items;
+            set => SetProperty(ref items, value);
         }
     }
 }

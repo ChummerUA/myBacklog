@@ -10,6 +10,7 @@ using Android.OS;
 using Unity;
 using Prism;
 using Prism.Ioc;
+using myBacklog.Services;
 
 namespace myBacklog.Droid
 {
@@ -24,6 +25,9 @@ namespace myBacklog.Droid
             base.OnCreate(savedInstanceState);
             global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
             global::Xamarin.Forms.FormsMaterial.Init(this, savedInstanceState);
+
+            Plugin.CloudFirestore.CloudFirestore.Init(ApplicationContext);
+
             LoadApplication(new myBacklog.App(new AndroidPlatformInitializer()));
         }
     }
@@ -32,7 +36,6 @@ namespace myBacklog.Droid
     {
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
-            
         }
     }
 }

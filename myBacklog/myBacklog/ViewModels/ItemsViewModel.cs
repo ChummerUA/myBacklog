@@ -183,7 +183,7 @@ namespace myBacklog.ViewModels
         public ICommand CategorySettingsCommand { get; }
         #endregion
 
-        public ItemsViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
+        public ItemsViewModel(INavigationService navigationService, IDialog dialogService, IFirebase databaseService) : base(navigationService, dialogService, databaseService)
         {
 
             UpdateModelCommand = new Command(async () => await UpdateModelAsync());
@@ -236,7 +236,7 @@ namespace myBacklog.ViewModels
                 }
             };
 
-            var states = await App.Database.GetStatesAsync((int)Category.CategoryID);
+            var states = await FirebaseService.GetStatesAsync(Category.CategoryID);
             SelectableStates = new ObservableCollection<StateModel>(states);
 
             foreach (var state in states)
@@ -274,7 +274,8 @@ namespace myBacklog.ViewModels
                 ItemName = item.ItemName,
                 ItemID = item.ItemID,
                 State = item.State,
-                StateID = item.StateID
+                StateID = item.StateID,
+                ID = item.ID
             };
         }
 
@@ -284,7 +285,7 @@ namespace myBacklog.ViewModels
             {
                 return;
             }
-            await App.Database.UpdateItemAsync(EditItem);
+            await FirebaseService.UpdateItemAsync(EditItem);
 
             var i = Category.Items.IndexOf(Category.Items.FirstOrDefault(x => x.ItemID == EditItem.ItemID));
             Category.Items[i] = EditItem;
@@ -297,7 +298,9 @@ namespace myBacklog.ViewModels
             {
                 return;
             }
-            await App.Database.CreateItemAsync(NewItem);
+
+            await FirebaseService.InsertItemAsync(NewItem);
+
             await ShowItemsAsync();
             ResetNewItemCommand.Execute(null);
         }
@@ -313,31 +316,28 @@ namespace myBacklog.ViewModels
             Category.Items = new ObservableCollection<ItemModel>();
             if (SearchItem.ItemName != "")
             {
-                items = await App.Database.GetSearchResultsAsync(SearchItem);
+                items = await FirebaseService.GetItemsAsync(SearchItem, 20, null);
             }
             else if (VisibleState == States[0])
             {
-                items = await App.Database.GetCategoryItemsAsync((int)Category.CategoryID);                
+                items = await FirebaseService.GetItemsAsync(Category, 20, null);
             }
             else
             {
-                items = await App.Database.GetStateItemsAsync((int)VisibleState.StateID);
+                items = await FirebaseService.GetItemsAsync(VisibleState, 20, null);
             }
 
             foreach (var item in items)
             {
                 item.State = States.FirstOrDefault(x => x.StateID == item.StateID);
             }
-            var source = items.OrderBy(x => x.StateID)
-                .ThenByDescending(x => x.ItemID)
-                .ToList();
 
-            Category.Items = new ObservableCollection<ItemModel>(source);
+            Category.Items = new ObservableCollection<ItemModel>(items);
         }
 
         private async Task LoadMoreAsync()
         {
-            if (!CanLoadMore())
+            if (!await CanLoadMore())
             {
                 return;
             }
@@ -346,7 +346,7 @@ namespace myBacklog.ViewModels
 
             if (SearchItem.ItemName != "")
             {
-                var items = await App.Database.GetSearchResultsAsync(SearchItem, (int)Category.Items.Last().ItemID);
+                var items = await FirebaseService.GetItemsAsync(SearchItem, 20, Category.Items.Last().ID);
                 for (int i = 0; i < items.Count; i++)
                 {
                     items[i].State = SelectableStates.FirstOrDefault(x => x.StateID == items[i].StateID);
@@ -355,8 +355,8 @@ namespace myBacklog.ViewModels
             }
             else if (VisibleState == States[0])
             {
-                var items = await App.Database.GetCategoryItemsAsync((int)Category.CategoryID, (int)Category.Items.Last().ItemID);
-                for(int i = 0; i < items.Count; i++)
+                var items = await FirebaseService.GetItemsAsync(Category, 20, Category.Items.Last().ID);
+                for (int i = 0; i < items.Count; i++)
                 {
                     items[i].State = SelectableStates.FirstOrDefault(x => x.StateID == items[i].StateID);
                     Category.Items.Add(items[i]);
@@ -364,7 +364,7 @@ namespace myBacklog.ViewModels
             }
             else if (VisibleState.StateID != null)
             {
-                var items = await App.Database.GetStateItemsAsync((int)VisibleState.StateID, (int)Category.Items.Last().ItemID);
+                var items = await FirebaseService.GetItemsAsync(VisibleState, 20, Category.Items.Last().ID);
                 for (int i = 0; i < items.Count; i++)
                 {
                     items[i].State = SelectableStates.FirstOrDefault(x => x.StateID == items[i].StateID);
@@ -377,8 +377,10 @@ namespace myBacklog.ViewModels
 
         private async Task OpenCategorySettingsAsync()
         {
-            var parameters = new NavigationParameters();
-            parameters.Add("categoryID", Category.CategoryID);
+            var parameters = new NavigationParameters
+            {
+                { "categoryID", Category.CategoryID }
+            };
 
             await NavigationService.NavigateAsync("SetCategoryPage", parameters);
         }
@@ -408,7 +410,7 @@ namespace myBacklog.ViewModels
                 return false;
             }
 
-            return App.Database.IsItemNameAwailable(EditItem);
+            return FirebaseService.IsItemNameAwailableAsync(EditItem).GetAwaiter().GetResult();
         }
 
         private bool CanCreateItem()
@@ -428,7 +430,7 @@ namespace myBacklog.ViewModels
                 return false;
             }
 
-            return App.Database.IsItemNameAwailable(NewItem);
+            return FirebaseService.IsItemNameAwailableAsync(EditItem).GetAwaiter().GetResult();
         }
 
         private bool CanSetItemName(ItemModel target)
@@ -441,22 +443,23 @@ namespace myBacklog.ViewModels
             {
                 return false;
             }
-            return App.Database.IsItemNameAwailable(target);
+            return FirebaseService.IsItemNameAwailableAsync(EditItem).GetAwaiter().GetResult();
         }
 
-        private bool CanLoadMore()
+        private async Task<bool> CanLoadMore()
         {
             if (IsItemsLoading)
             {
                 return false;
             }
-            if(Category.Items.Count == 0)
+            if (Category.Items.Count == 0)
             {
                 return false;
             }
+
             if (VisibleState == States[0])
             {
-                var count = App.Database.GetCategoryItemsCount((int)Category.CategoryID);
+                var count = await FirebaseService.GetItemsCountAsync(Category);
 
                 if (Category.Items.Count >= count)
                 {
@@ -465,7 +468,7 @@ namespace myBacklog.ViewModels
             }
             else if (VisibleState.StateName == "SearchResults")
             {
-                var count = App.Database.GetSearchResultsCount(SearchItem);
+                var count = await FirebaseService.GetItemsCountAsync(SearchItem);
 
                 if (Category.Items.Count >= count)
                 {
@@ -474,7 +477,7 @@ namespace myBacklog.ViewModels
             }
             else if (VisibleState.StateID != null)
             {
-                var count = App.Database.GetStateItemsCount((int)VisibleState.StateID);
+                var count = await FirebaseService.GetItemsCountAsync(VisibleState);
 
                 if (Category.Items.Count >= count)
                 {

@@ -27,6 +27,7 @@ namespace myBacklog.iOS
         {
             global::Xamarin.Forms.Forms.Init();
             global::Xamarin.Forms.FormsMaterial.Init();
+            Firebase.Core.App.Configure();
             LoadApplication(new myBacklog.App(new iOSPlatformInitializer())); 
 
             return base.FinishedLaunching(app, options);

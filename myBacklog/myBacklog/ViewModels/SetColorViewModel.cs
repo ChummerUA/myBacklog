@@ -22,7 +22,7 @@ namespace myBacklog.ViewModels
 
         public ICommand ConfirmColorCommand { get; }
 
-        public SetColorViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
+        public SetColorViewModel(INavigationService navigationService, IDialog dialogService, IFirebase databaseService) : base(navigationService, dialogService, databaseService)
         {
             Colors = new ObservableCollection<NamedColor>();
             var colors = NamedColor.All;

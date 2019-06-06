@@ -35,6 +35,7 @@
     <BundleAssemblies>false</BundleAssemblies>
     <AndroidSupportedAbis />
     <MandroidI18n />
+    <AndroidEnableMultiDex>false</AndroidEnableMultiDex>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,6 +55,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Plugin.CloudFirestore">
+      <Version>1.2.3</Version>
+    </PackageReference>
+    <PackageReference Include="PluginsPopup">
+      <Version>1.0.1</Version>
+    </PackageReference>
     <PackageReference Include="Prism.DryIoc.Forms">
       <Version>7.1.0.431</Version>
     </PackageReference>
@@ -62,9 +69,6 @@
     </PackageReference>
     <PackageReference Include="Unity">
       <Version>5.10.3</Version>
-    </PackageReference>
-    <PackageReference Include="Xamarin.Firebase.Messaging">
-      <Version>60.1142.1</Version>
     </PackageReference>
     <PackageReference Include="Xamarin.Forms" Version="3.6.0.344457" />
     <PackageReference Include="Xamarin.Android.Support.Design" Version="28.0.0.1" />
@@ -77,15 +81,12 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Effects\ShadowEffect.cs" />
-    <Compile Include="Firebase_Android.cs" />
     <Compile Include="MainActivity.cs" />
-    <Compile Include="Renderers\CustomFrameRenderer.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="google-services.json" />
+    <GoogleServicesJson Include="google-services.json" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Assets\AboutAssets.txt" />
     <None Include="Properties\AndroidManifest.xml" />
@@ -109,6 +110,8 @@
     <AndroidResource Include="Resources\mipmap-xxxhdpi\launcher_foreground.png" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Effects\" />
+    <Folder Include="Renderers\" />
     <Folder Include="Resources\drawable-hdpi\" />
     <Folder Include="Resources\drawable-xhdpi\" />
     <Folder Include="Resources\drawable-xxhdpi\" />

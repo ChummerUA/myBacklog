@@ -16,6 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Plugin.CloudFirestore" Version="1.2.3" />
+    <PackageReference Include="PluginsPopup" Version="1.0.1" />
     <PackageReference Include="Prism.Core" Version="7.1.0.431" />
     <PackageReference Include="Prism.DryIoc.Forms" Version="7.1.0.431" />
     <PackageReference Include="sqlite-net-pcl" Version="1.5.231" />
@@ -37,5 +39,9 @@
     <EmbeddedResource Update="Views\Pages\SetColorPage.xaml">
       <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
   </ItemGroup>
 </Project>

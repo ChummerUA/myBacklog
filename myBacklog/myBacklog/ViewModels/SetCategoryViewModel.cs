@@ -140,7 +140,7 @@ namespace myBacklog.ViewModels
         public ICommand ConfirmColorCommand { get; private set; }
         #endregion
 
-        public SetCategoryViewModel(INavigationService navigationService, IDialog dialogService) : base(navigationService, dialogService)
+        public SetCategoryViewModel(INavigationService navigationService, IDialog dialogService, IFirebase databaseService) : base(navigationService, dialogService, databaseService)
         {
             DeletedStates = new List<StateModel>();
             SetCommands();
@@ -156,7 +156,7 @@ namespace myBacklog.ViewModels
             else if(parameters.ContainsKey("categoryID"))
             {
                 IsNewCategory = false;
-                var categoryID = parameters["categoryID"] as int?;
+                var categoryID = parameters["categoryID"] as string;
                 GetCategoryCommand.Execute(categoryID);
             }
             else
@@ -175,15 +175,15 @@ namespace myBacklog.ViewModels
 
                 IsNewCategory = true;
                 Title = "New category";
+                IsUpdated = true;
             }
         }
 
         public void SetCommands()
         {
             SaveCategoryCommand = new Command(execute: async () => await SaveCategoryAsync());
-            SetCategoryNameCommand = new Command(execute: SetCategoryName,
-                canExecute: CanSetCategoryName);
-            GetCategoryCommand = new Command<int?>(execute: async (parameter) => await GetCategoryAsync(parameter));
+            SetCategoryNameCommand = new Command(execute: async () => await SetCategoryNameAsync());
+            GetCategoryCommand = new Command<string>(execute: async (parameter) => await GetCategoryAsync(parameter));
             DeleteCategoryCommand = new Command(execute: async () => await DeleteCategoryAsync());
 
             CreateStateCommand = new Command(execute: CreateState);
@@ -199,7 +199,7 @@ namespace myBacklog.ViewModels
         #region Command.Execute()
         private async Task SaveCategoryAsync()
         {
-            if (!CanSaveCategory())
+            if (!await CanSaveCategoryAsync())
             {
                 return;
             }
@@ -212,48 +212,47 @@ namespace myBacklog.ViewModels
 
             if (IsNewCategory)
             {
-                var categoryID = await App.Database.CreateCategoryAsync(Category);
+                var categoryID = await FirebaseService.InsertCategoryAsync(Category);
                 foreach(var state in States)
                 {
                     state.CategoryID = categoryID;
-                    await App.Database.CreateStateAsync(state);
+                    await FirebaseService.InsertStateAsync(state);
                 }
             }
             else
             {
-                await App.Database.UpdateCategoryAsync(Category);
+                await FirebaseService.UpdateCategoryAsync(Category);
                 foreach(var state in States)
                 {
                     if(state.StateID == null)
                     {
-                        await App.Database.CreateStateAsync(state);
+                        await FirebaseService.InsertStateAsync(state);
                     }
                     else
                     {
-                        await App.Database.UpdateStateAsync(state);
+                        await FirebaseService.UpdateStateAsync(state);
                     }
                 }
                 foreach(var state in DeletedStates)
                 {
-                    await App.Database.DeleteStateAsync(state);
+                    await FirebaseService.DeleteStateAsync(state);
                 }
             }
             await NavigationService.GoBackAsync(parameters);
         }
 
-        private async Task GetCategoryAsync(int? categoryID)
+        private async Task GetCategoryAsync(string categoryID)
         {
             if (!IsNewCategory)
             {
-                Category = await App.Database.GetCategoryAsync((int)categoryID);
-                States = new ObservableCollection<StateModel>(await App.Database.GetStatesAsync((int)categoryID));
-                Title = Category.CategoryName;
+                Category = await FirebaseService.GetCategoryAsync(categoryID);
+                States = new ObservableCollection<StateModel>(await FirebaseService.GetStatesAsync(categoryID));
             }
         }
 
-        private void SetCategoryName()
+        private async Task SetCategoryNameAsync()
         {
-            if (!CanSetCategoryName())
+            if (!await CanSetCategoryNameAsync())
             {
                 return;
             }
@@ -271,11 +270,13 @@ namespace myBacklog.ViewModels
             var delete = await DialogService.DisplayAlert("Delete category", "Are you sure you want to delete category", "Ok", "Cancel");
             if (delete)
             {
-                await App.Database.DeleteCategoryAsync(Category);
+                await FirebaseService.DeleteCategoryAsync(Category);
                 IsUpdated = true;
 
-                var parameters = new NavigationParameters();
-                parameters.Add("IsUpdated", IsUpdated);
+                var parameters = new NavigationParameters
+                {
+                    { "IsUpdated", IsUpdated }
+                };
 
                 await NavigationService.GoBackToRootAsync(parameters);
             }
@@ -283,6 +284,11 @@ namespace myBacklog.ViewModels
 
         private void CreateState()
         {
+            if (!CanCreateState())
+            {
+                return;
+            }
+
             StateModel state = new StateModel
             {
                 StateName = "",
@@ -334,8 +340,10 @@ namespace myBacklog.ViewModels
         {
             EditState = state;
 
-            var parameters = new NavigationParameters();
-            parameters.Add("state", state);
+            var parameters = new NavigationParameters
+            {
+                { "state", state }
+            };
 
             NavigationService.NavigateAsync("SetColorPage", parameters);
         }
@@ -384,7 +392,7 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region Command.CanExecute()
-        private bool CanSaveCategory()
+        private async Task<bool> CanSaveCategoryAsync()
         {
             if (Category == null)
             {
@@ -405,32 +413,27 @@ namespace myBacklog.ViewModels
             {
                 return false;
             }
+            if(!CanCreateState())
+            {
+                return false;
+            }
 
-            var isAwailable = App.Database.IsCategoryNameAwailable(Category);
-
-            return isAwailable;
+            return await FirebaseService.IsCategoryNameAwailableAsync(Category);
         }
 
-        private bool CanSetCategoryName()
+        private async Task<bool> CanSetCategoryNameAsync()
         {
             if(Category.CategoryName == "" || Category.CategoryName == null)
             {
                 return false;
             }
 
-            var isAwailable = App.Database.IsCategoryNameAwailable(Category);
-
-            return isAwailable;
+            return await FirebaseService.IsCategoryNameAwailableAsync(Category);
         }
 
-        private bool CanCreateState(string parameter)
+        private bool CanCreateState()
         {
-            if(parameter == "" || parameter == null)
-            {
-                return false;
-            }
-
-            if (States.FirstOrDefault(x => x.StateName == parameter as string) != null)
+            if(States.FirstOrDefault(x => x.StateName == "New state") != null)
             {
                 return false;
             }

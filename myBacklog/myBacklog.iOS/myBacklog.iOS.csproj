@@ -89,11 +89,14 @@
     <CodesignKey>iPhone Distribution</CodesignKey>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
+    <AppExtensionDebugBundleId />
+  </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Firebase_iOS.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="AppDelegate.cs" />
     <None Include="Entitlements.plist" />
+    <BundleResource Include="GoogleService-Info.plist" />
     <None Include="Info.plist" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -149,6 +152,12 @@
     <Reference Include="Xamarin.iOS" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Plugin.CloudFirestore">
+      <Version>1.2.3</Version>
+    </PackageReference>
+    <PackageReference Include="PluginsPopup">
+      <Version>1.0.1</Version>
+    </PackageReference>
     <PackageReference Include="Prism.DryIoc.Forms">
       <Version>7.1.0.431</Version>
     </PackageReference>
