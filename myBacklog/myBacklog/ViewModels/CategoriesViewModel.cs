@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -49,31 +50,35 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region ICommand
-        public ICommand UpdateCategoriesCommand { get; }
+        public ICommand RefreshCategoriesCommand { get; }
+        public ICommand LoadMoreCategoriesCommand { get; }
         public ICommand CreateCategoryCommand { get; }
         public ICommand OpenCategoryCommand { get; }
         #endregion
 
         public CategoriesViewModel(INavigationService navigationService, IDialog dialogService, IFirebase databaseService) : base(navigationService, dialogService, databaseService)
         {
-            UpdateCategoriesCommand = new Command(async () => await UpdateCategoriesAsync());
+            RefreshCategoriesCommand = new Command(async () => await RefreshCategoriesAsync());
+            LoadMoreCategoriesCommand = new Command(async () => await LoadMoreCategoriesAsync());
             CreateCategoryCommand = new Command(async () => await CreateCategoryAsync());
             OpenCategoryCommand = new Command<CategoryModel>(async (param) => await OpenCategoryAsync(param));
 
-            UpdateCategoriesCommand.Execute(null);
+            RefreshCategoriesCommand.Execute(null);
         }
 
-        public override void OnNavigatingTo(INavigationParameters parameters)
+        public override async void OnNavigatingTo(INavigationParameters parameters)
         {
+            await DialogService.PopAsync();
             if (parameters.ContainsKey("IsUpdated"))
             {
-                UpdateCategoriesCommand.Execute(null);
+                RefreshCategoriesCommand.Execute(null);
             }
         }
 
-        private async Task UpdateCategoriesAsync()
+        private async Task RefreshCategoriesAsync()
         {
-            var categoriesList = await FirebaseService.GetCategoriesAsync();
+            await DialogService.DisplayPopupAsync();
+            var categoriesList = await FirebaseService.GetCategoriesAsync(20, null);
 
             if(categoriesList == null)
             {
@@ -81,12 +86,35 @@ namespace myBacklog.ViewModels
             }
 
             Categories = new ObservableCollection<CategoryModel>(categoriesList);
+            await DialogService.PopAsync();
+        }
+
+        private async Task LoadMoreCategoriesAsync()
+        {
+            if (!await CanLoadMoreAsync())
+            {
+                return;
+            }
+
+            var categoriesList = await FirebaseService.GetCategoriesAsync(10, Categories.Last().ID);
+
+            if(categoriesList == null)
+            {
+                return;
+            }
+
+            foreach(var category in categoriesList)
+            {
+                Categories.Add(category);
+            }
         }
 
         private async Task CreateCategoryAsync()
         {
+            await DialogService.DisplayPopupAsync();
             var parameters = new NavigationParameters();
             await NavigationService.NavigateAsync("SetCategoryPage", parameters);
+            await DialogService.PopAsync();
         }
 
         private async Task OpenCategoryAsync(CategoryModel c)
@@ -94,6 +122,25 @@ namespace myBacklog.ViewModels
             var parameters = new NavigationParameters();
             parameters.Add("category", c);
             await NavigationService.NavigateAsync("ItemsPage", parameters);
+        }
+
+        private async Task<bool> CanLoadMoreAsync()
+        {
+            if(Categories == null)
+            {
+                return false;
+            }
+            if(Categories.Count == 0)
+            {
+                return false;
+            }
+
+            if(Categories.Count == await FirebaseService.GetCategoriesCountAsync())
+            {
+                return false;
+            }
+
+            return true;
         }
     }
 }

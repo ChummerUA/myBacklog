@@ -26,6 +26,7 @@ namespace myBacklog.Droid
             global::Xamarin.Forms.Forms.Init(this, savedInstanceState);
             global::Xamarin.Forms.FormsMaterial.Init(this, savedInstanceState);
 
+            Rg.Plugins.Popup.Popup.Init(this, savedInstanceState);
             Plugin.CloudFirestore.CloudFirestore.Init(ApplicationContext);
 
             LoadApplication(new myBacklog.App(new AndroidPlatformInitializer()));

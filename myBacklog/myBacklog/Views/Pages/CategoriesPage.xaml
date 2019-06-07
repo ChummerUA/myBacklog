@@ -38,7 +38,9 @@
             <StackLayout>
                 <ListView x:Name="CategoriesListView"
                           Style="{StaticResource CategoriesStyle}"
-                          ItemSelected="OpenCategoryAsync">
+                          ItemSelected="OpenCategory"
+                          ItemAppearing="CategoriesListView_ItemAppearing"
+                          SeparatorVisibility="None">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <ViewCell Height="50">
@@ -54,6 +56,7 @@
             </StackLayout>
             <Frame Padding="0"
                    CornerRadius="20"
+                   HasShadow="False"
                    VerticalOptions="EndAndExpand"
                    HorizontalOptions="CenterAndExpand"
                    HeightRequest="40"

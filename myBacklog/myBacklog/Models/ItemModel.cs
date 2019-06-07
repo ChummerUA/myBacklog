@@ -1,6 +1,5 @@
 ﻿using Plugin.CloudFirestore.Attributes;
 using Prism.Mvvm;
-using SQLite;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -35,7 +34,7 @@ namespace myBacklog.Models
 
         public string StateID
         {
-            get => categoryID;
+            get => stateID;
             set => SetProperty(ref stateID, value);
         }
 
@@ -52,7 +51,7 @@ namespace myBacklog.Models
             set => SetProperty(ref itemName, value);
         }
 
-        [Ignore]
+        [Ignored]
         public StateModel State
         {
             get => state;

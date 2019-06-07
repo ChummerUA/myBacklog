@@ -146,8 +146,9 @@ namespace myBacklog.ViewModels
             SetCommands();
         }
 
-        public override void OnNavigatingTo(INavigationParameters parameters)
+        public override async void OnNavigatingTo(INavigationParameters parameters)
         {
+            await DialogService.PopAsync();
             if (parameters.ContainsKey("color"))
             {
                 var color = parameters["color"] as NamedColor;
@@ -155,6 +156,7 @@ namespace myBacklog.ViewModels
             }
             else if(parameters.ContainsKey("categoryID"))
             {
+
                 IsNewCategory = false;
                 var categoryID = parameters["categoryID"] as string;
                 GetCategoryCommand.Execute(categoryID);
@@ -204,6 +206,7 @@ namespace myBacklog.ViewModels
                 return;
             }
 
+            await DialogService.DisplayPopupAsync();
             var parameters = new NavigationParameters();
             if (IsUpdated)
             {
@@ -213,10 +216,10 @@ namespace myBacklog.ViewModels
             if (IsNewCategory)
             {
                 var categoryID = await FirebaseService.InsertCategoryAsync(Category);
-                foreach(var state in States)
+                for(int i = States.Count - 1; i >= 0; i--)
                 {
-                    state.CategoryID = categoryID;
-                    await FirebaseService.InsertStateAsync(state);
+                    States[i].CategoryID = categoryID;
+                    await FirebaseService.InsertStateAsync(States[i]);
                 }
             }
             else
@@ -238,6 +241,7 @@ namespace myBacklog.ViewModels
                     await FirebaseService.DeleteStateAsync(state);
                 }
             }
+            await DialogService.PopAsync();
             await NavigationService.GoBackAsync(parameters);
         }
 
@@ -245,8 +249,10 @@ namespace myBacklog.ViewModels
         {
             if (!IsNewCategory)
             {
+                await DialogService.DisplayPopupAsync();
                 Category = await FirebaseService.GetCategoryAsync(categoryID);
                 States = new ObservableCollection<StateModel>(await FirebaseService.GetStatesAsync(categoryID));
+                await DialogService.PopAsync();
             }
         }
 
@@ -270,6 +276,7 @@ namespace myBacklog.ViewModels
             var delete = await DialogService.DisplayAlert("Delete category", "Are you sure you want to delete category", "Ok", "Cancel");
             if (delete)
             {
+                await DialogService.DisplayPopupAsync();
                 await FirebaseService.DeleteCategoryAsync(Category);
                 IsUpdated = true;
 
@@ -278,6 +285,7 @@ namespace myBacklog.ViewModels
                     { "IsUpdated", IsUpdated }
                 };
 
+                await DialogService.DisplayPopupAsync();
                 await NavigationService.GoBackToRootAsync(parameters);
             }
         }

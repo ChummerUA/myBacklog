@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Drawing;
-using SQLite;
 using System.Linq;
 using System.Collections.ObjectModel;
 using System.ComponentModel;

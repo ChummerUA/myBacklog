@@ -188,22 +188,20 @@ namespace myBacklog.ViewModels
 
             UpdateModelCommand = new Command(async () => await UpdateModelAsync());
             SetEditItemCommand = new Command<ItemModel>((parameter) => SetEditItem(parameter));
-            CreateItemCommand = new Command(execute: async () => await CreateItemAsync(),
-                canExecute: () => CanCreateItem());
-            SaveItemCommand = new Command(execute: async () => await SaveItemAsync(),
-                canExecute: CanSaveItem);
+            CreateItemCommand = new Command(execute: async () => await CreateItemAsync());
+            SaveItemCommand = new Command(execute: async () => await SaveItemAsync());
             ResetNewItemCommand = new Command(ResetNewItem);
             ResetSearchItemCommand = new Command(ResetSearchItem);
             ShowItemsCommand = new Command(async () => await ShowItemsAsync());
             LoadMoreCommand = new Command(execute: async () => await LoadMoreAsync());
-            SetItemNameCommand = new Command<ItemModel>(execute:(parameter) => SetItemName(parameter),
-                canExecute: (parameter) => CanSetItemName(parameter));
+            SetItemNameCommand = new Command<ItemModel>(execute: async(parameter) => await SetItemNameAsync(parameter));
             CategorySettingsCommand = new Command(async () => await OpenCategorySettingsAsync());
             ResetPanelItemsCommand = new Command(ResetPanelItems);
         }
 
-        public override void OnNavigatingTo(INavigationParameters parameters)
+        public override async void OnNavigatingTo(INavigationParameters parameters)
         {
+            await DialogService.PopAsync();
             if (parameters.ContainsKey("category"))
             {
                 var c = parameters.GetValue<CategoryModel>("category");
@@ -219,10 +217,12 @@ namespace myBacklog.ViewModels
         #region Execute()
         private async Task UpdateModelAsync()
         {
+            await DialogService.DisplayPopupAsync();
             await SetSelectableStatesAsync();
             ResetNewItemCommand.Execute(null);
             ResetSearchItem();
             ShowItemsCommand.Execute(null);
+            await DialogService.PopAsync();
         }
 
         private async Task SetSelectableStatesAsync()
@@ -281,33 +281,41 @@ namespace myBacklog.ViewModels
 
         private async Task SaveItemAsync()
         {
-            if (!CanSaveItem())
+            if (!await CanSaveItemAsync())
             {
                 return;
             }
+
+            await DialogService.DisplayPopupAsync();
             await FirebaseService.UpdateItemAsync(EditItem);
 
             var i = Category.Items.IndexOf(Category.Items.FirstOrDefault(x => x.ItemID == EditItem.ItemID));
             Category.Items[i] = EditItem;
             ResetNewItemCommand.Execute(null);
+            await DialogService.DisplayPopupAsync();
         }
 
         private async Task CreateItemAsync()
         {
-            if (!CanCreateItem())
+            if (!await CanCreateItemAsync())
             {
                 return;
             }
 
+            await DialogService.DisplayPopupAsync();
             await FirebaseService.InsertItemAsync(NewItem);
+            ResetNewItemCommand.Execute(null);
 
             await ShowItemsAsync();
-            ResetNewItemCommand.Execute(null);
+            await DialogService.PopAsync();
         }
 
-        private void SetItemName(ItemModel target)
+        private async Task SetItemNameAsync(ItemModel target)
         {
-            //
+            if(!await CanSetItemNameAsync(target))
+            {
+
+            }
         }
 
         private async Task ShowItemsAsync()
@@ -329,7 +337,8 @@ namespace myBacklog.ViewModels
 
             foreach (var item in items)
             {
-                item.State = States.FirstOrDefault(x => x.StateID == item.StateID);
+                var state = States.FirstOrDefault(x => x.StateID == item.StateID);
+                item.State = state;
             }
 
             Category.Items = new ObservableCollection<ItemModel>(items);
@@ -337,7 +346,7 @@ namespace myBacklog.ViewModels
 
         private async Task LoadMoreAsync()
         {
-            if (!await CanLoadMore())
+            if (!await CanLoadMoreAsync())
             {
                 return;
             }
@@ -353,7 +362,7 @@ namespace myBacklog.ViewModels
                     Category.Items.Add(items[i]);
                 }
             }
-            else if (VisibleState == States[0])
+            else if (VisibleState == States[0] && Category.Items.Count != 0)
             {
                 var items = await FirebaseService.GetItemsAsync(Category, 20, Category.Items.Last().ID);
                 for (int i = 0; i < items.Count; i++)
@@ -377,11 +386,13 @@ namespace myBacklog.ViewModels
 
         private async Task OpenCategorySettingsAsync()
         {
+            await DialogService.DisplayPopupAsync();
             var parameters = new NavigationParameters
             {
                 { "categoryID", Category.CategoryID }
             };
 
+            await DialogService.DisplayPopupAsync();
             await NavigationService.NavigateAsync("SetCategoryPage", parameters);
         }
 
@@ -393,7 +404,7 @@ namespace myBacklog.ViewModels
         #endregion
 
         #region CanExecute()
-        private bool CanSaveItem()
+        private async Task<bool> CanSaveItemAsync()
         {
             if(EditItem == null)
             {
@@ -410,10 +421,10 @@ namespace myBacklog.ViewModels
                 return false;
             }
 
-            return FirebaseService.IsItemNameAwailableAsync(EditItem).GetAwaiter().GetResult();
+            return await FirebaseService.IsItemNameAwailableAsync(EditItem);
         }
 
-        private bool CanCreateItem()
+        private async Task<bool> CanCreateItemAsync()
         {
             if (NewItem == null)
             {
@@ -430,10 +441,10 @@ namespace myBacklog.ViewModels
                 return false;
             }
 
-            return FirebaseService.IsItemNameAwailableAsync(EditItem).GetAwaiter().GetResult();
+            return await FirebaseService.IsItemNameAwailableAsync(NewItem);
         }
 
-        private bool CanSetItemName(ItemModel target)
+        private async Task<bool> CanSetItemNameAsync(ItemModel target)
         {
             if(target == null)
             {
@@ -443,35 +454,40 @@ namespace myBacklog.ViewModels
             {
                 return false;
             }
-            return FirebaseService.IsItemNameAwailableAsync(EditItem).GetAwaiter().GetResult();
+            return await FirebaseService.IsItemNameAwailableAsync(target);
         }
 
-        private async Task<bool> CanLoadMore()
+        private async Task<bool> CanLoadMoreAsync()
         {
             if (IsItemsLoading)
             {
                 return false;
             }
-            if (Category.Items.Count == 0)
+            IsItemsLoading = true;
+
+            if (Category.Items?.Any() != true)
             {
+                IsItemsLoading = false;
                 return false;
             }
 
-            if (VisibleState == States[0])
+            if (VisibleState == States?[0])
             {
                 var count = await FirebaseService.GetItemsCountAsync(Category);
 
                 if (Category.Items.Count >= count)
                 {
+                    IsItemsLoading = false;
                     return false;
                 }
             }
-            else if (VisibleState.StateName == "SearchResults")
+            else if (VisibleState?.StateName == "SearchResults")
             {
                 var count = await FirebaseService.GetItemsCountAsync(SearchItem);
 
                 if (Category.Items.Count >= count)
                 {
+                    IsItemsLoading = false;
                     return false;
                 }
             }
@@ -481,10 +497,12 @@ namespace myBacklog.ViewModels
 
                 if (Category.Items.Count >= count)
                 {
+                    IsItemsLoading = false;
                     return false;
                 }
             }
 
+            IsItemsLoading = false;
             return true;
         }
         #endregion

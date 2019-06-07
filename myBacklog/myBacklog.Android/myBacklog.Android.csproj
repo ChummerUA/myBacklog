@@ -64,9 +64,6 @@
     <PackageReference Include="Prism.DryIoc.Forms">
       <Version>7.1.0.431</Version>
     </PackageReference>
-    <PackageReference Include="sqlite-net-pcl">
-      <Version>1.5.231</Version>
-    </PackageReference>
     <PackageReference Include="Unity">
       <Version>5.10.3</Version>
     </PackageReference>

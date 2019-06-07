@@ -15,7 +15,7 @@ namespace myBacklog.Services
 
         Task<string> InsertCategoryAsync(CategoryModel category);
 
-        Task<List<CategoryModel>> GetCategoriesAsync();
+        Task<List<CategoryModel>> GetCategoriesAsync(int count, int? id);
 
         Task<CategoryModel> GetCategoryAsync(string categoryID);
 

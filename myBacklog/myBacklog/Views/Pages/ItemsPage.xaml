@@ -3,8 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="myBacklog.Views.ItemsPage"
              xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
-             xmlns:effects="clr-namespace:myBacklog.Views.Effects"
-             xmlns:customui="clr-namespace:myBacklog.Views.CustomUI"
              prism:ViewModelLocator.AutowireViewModel="True"
              x:Name="Page"
              Visual="Material"
@@ -77,6 +75,15 @@
             <Setter Property="HasShadow" Value="False"/>
             <Setter Property="BackgroundColor" Value="White"/>
         </Style>
+        <Style x:Key="ButtonFrame" TargetType="Frame">
+            <Setter Property="Margin" Value="18, 5, 18, 10"/>
+            <Setter Property="Padding" Value="0, 0, 0, 0"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="HeightRequest" Value="40"/>
+            <Setter Property="IsClippedToBounds" Value="True"/>
+            <!--<Setter Property="BackgroundColor" Value="LightGreen"/>-->
+            <Setter Property="Visual" Value="Default"/>
+        </Style>
         <!--#endregion-->
         <!--#region BoxView-->
         <Style x:Key="StateColorStyle" TargetType="BoxView">
@@ -114,10 +121,24 @@
         <!--#endregion-->
         <!--#region Button-->
         <Style x:Key="ConfirmButton" TargetType="Button">
+            <!--<Setter Property="IsVisible" Value="False"/>-->
             <Setter Property="Text" Value="Confirm"/>
-            <Setter Property="CornerRadius" Value="25"/>
+            <Setter Property="Visual">
+                <Setter.Value>
+                    <OnPlatform iOS="Default"
+                                Android="Material"/>
+                </Setter.Value>
+            </Setter>
             <Setter Property="BackgroundColor" Value="{StaticResource NavigationPrimary}"/>
-            <Setter Property="Margin" Value="18, 5, 18, 10"/>
+            <Setter Property="TextColor">
+                <Setter.Value>
+                    <OnPlatform x:TypeArguments="Color"
+                                iOS="White"
+                                Android="Default"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="VerticalOptions" Value="FillAndExpand"/>
+            <Setter Property="HorizontalOptions" Value="FillAndExpand"/>
         </Style>
         <!--#endregion-->
 
@@ -133,8 +154,8 @@
                       ItemsSource="{Binding Items}"
                       ItemSelected="ItemsListView_ItemSelected"
                       ItemAppearing="ItemListView_ItemAppearing"
-                      IsRefreshing="{Binding Source={x:Reference Page}, Path=BindingContext.IsItemsLoading}"
-                      VerticalOptions="FillAndExpand">
+                      VerticalOptions="FillAndExpand"
+                      SeparatorVisibility="None">
                 <ListView.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
@@ -150,7 +171,8 @@
             </ListView>
 
             <Frame x:Name="ButtonsPanel" 
-                   Style="{StaticResource FrameStyle}">
+                   Style="{StaticResource FrameStyle}"
+                   IsVisible="True">
                 <StackLayout Spacing="0">
                     <BoxView Style="{StaticResource Border}"/>
                     <StackLayout Style="{StaticResource ButtonsPanelStyle}"
@@ -206,9 +228,11 @@
                                     ItemDisplayBinding="{Binding StateName}"
                                     SelectedIndexChanged="NewItemStatePicker_SelectedIndexChanged"/>
                         </StackLayout>
-                        <Button x:Name="CreateItemButton"
+                        <Frame Style="{StaticResource ButtonFrame}">
+                            <Button x:Name="CreateItemButton"
                                 Style="{StaticResource ConfirmButton}"
                                 Clicked="CreateItemButton_Clicked"/>
+                        </Frame>
                     </StackLayout>
 
                     <StackLayout x:Name="EditItemStack"
@@ -228,9 +252,11 @@
                                     ItemDisplayBinding="{Binding StateName}"
                                     SelectedIndexChanged="EditItemStatePicker_SelectedIndexChanged"/>
                         </StackLayout>
-                        <Button x:Name="SaveItemButton"
+                        <Frame Style="{StaticResource ButtonFrame}">
+                            <Button x:Name="SaveItemButton"
                                 Style="{StaticResource ConfirmButton}"
                                 Clicked="SaveItemButton_Clicked"/>
+                        </Frame>
                     </StackLayout>
 
                     <StackLayout x:Name="SearchItemStack"
@@ -247,9 +273,11 @@
                                     ItemDisplayBinding="{Binding StateName}"
                                     SelectedIndexChanged="SearchItemStatePicker_SelectedIndexChanged"/>
                         </StackLayout>
-                        <Button x:Name="SearchItemButton"
+                        <Frame Style="{StaticResource ButtonFrame}">
+                            <Button x:Name="SearchItemButton"
                                 Style="{StaticResource ConfirmButton}"
                                 Clicked="SearchItemButton_Clicked"/>
+                        </Frame>
                     </StackLayout>
                 </StackLayout>
             </Frame>

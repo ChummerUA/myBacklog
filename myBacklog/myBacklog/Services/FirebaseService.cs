@@ -15,11 +15,13 @@ namespace myBacklog.Services
         #region Category
         public async Task<bool> IsCategoryNameAwailableAsync(CategoryModel category)
         {
-            var categories = await Current.Instance
+            var categories = (await Current.Instance
                 .GetCollection("Categories")
                 .WhereEqualsTo("CategoryName", category.CategoryName)
-                .GetDocumentsAsync();
-            if(categories.Count == 0)
+                .GetDocumentsAsync())
+                .ToObjects<CategoryModel>()
+                .Where(x => x.CategoryID != category.CategoryID);
+            if(categories.Count() == 0)
             {
                 return true;
             }
@@ -38,6 +40,7 @@ namespace myBacklog.Services
 
         public async Task<string> InsertCategoryAsync(CategoryModel category)
         {
+            category.ID = await GetCategoriesCountAsync();
             await Current.Instance
                 .GetCollection("Categories")
                 .AddDocumentAsync(category);
@@ -49,19 +52,25 @@ namespace myBacklog.Services
             var id = result.Documents.ElementAt(0).Id;
 
             category.CategoryID = id;
-            category.ID = await GetCategoriesCountAsync();
             await UpdateCategoryAsync(category);
 
             return id;
         }
 
-        public async Task<List<CategoryModel>> GetCategoriesAsync()
+        public async Task<List<CategoryModel>> GetCategoriesAsync(int count, int? id)
         {
+            if(id == null)
+            {
+                id = await GetCategoriesCountAsync();
+            }
+
             var result = await Current.Instance
                 .GetCollection("Categories")
+                .WhereLessThan("ID", id)
+                .OrderBy("ID", true)
+                .LimitTo(count)
                 .GetDocumentsAsync();
             return result.ToObjects<CategoryModel>()
-                .OrderByDescending(x => x.ID)
                 .ToList();
         }
 
@@ -134,11 +143,14 @@ namespace myBacklog.Services
         {
             return (await Current.Instance
                 .GetCollection("States")
-                .GetDocumentsAsync()).Count;
+                .WhereEqualsTo("CategoryID", categoryID)
+                .GetDocumentsAsync())
+                .Count;
         }
 
         public async Task InsertStateAsync(StateModel state)
         {
+            state.ID = await GetStatesCountAsync(state.CategoryID);
             await Current.Instance
                 .GetCollection("States")
                 .AddDocumentAsync(state);
@@ -152,7 +164,6 @@ namespace myBacklog.Services
             var id = result.Documents.FirstOrDefault().Id;
 
             state.StateID = id;
-            state.ID = await GetStatesCountAsync(state.CategoryID);
             await UpdateStateAsync(state);
         }
 
@@ -161,9 +172,9 @@ namespace myBacklog.Services
             var result = await Current.Instance
                 .GetCollection("States")
                 .WhereEqualsTo("CategoryID", categoryID)
+                .OrderBy("ID", true)
                 .GetDocumentsAsync();
             return result.ToObjects<StateModel>()
-                .OrderByDescending(x => x.ID)
                 .ToList();
         }
 
@@ -211,6 +222,19 @@ namespace myBacklog.Services
                 toUpdate.ID--;
                 await UpdateStateAsync(toUpdate);
             }
+
+            var items = await Current.Instance
+                .GetCollection("Items")
+                .WhereEqualsTo("StateID", state.StateID)
+                .GetDocumentsAsync();
+
+            foreach(var item in items.Documents)
+            {
+                await Current.Instance
+                    .GetCollection("Items")
+                    .GetDocument(item.Id)
+                    .DeleteDocumentAsync();
+            }
         }
         #endregion
 
@@ -219,6 +243,7 @@ namespace myBacklog.Services
         {
             var items = (await Current.Instance
                 .GetCollection("Items")
+                .WhereEqualsTo("ItemName", item.ItemName)
                 .WhereEqualsTo("CategoryID", item.CategoryID)
                 .GetDocumentsAsync())
                 .ToObjects<ItemModel>()
@@ -245,22 +270,40 @@ namespace myBacklog.Services
         {
             return (await Current.Instance
                 .GetCollection("Items")
-                .WhereEqualsTo("StateID", state.StateID)
+                .WhereEqualsTo("CategoryID", state.CategoryID)
                 .GetDocumentsAsync()).Count;
         }
 
         public async Task<int> GetItemsCountAsync(ItemModel item)
         {
-            return (await Current.Instance
+            var query = Current.Instance
                 .GetCollection("Items")
-                .WhereEqualsTo("CategoryID", item.CategoryID)
-                .WhereEqualsTo("StateID", item.StateID)
-                .WhereEqualsTo("ItemName", item.ItemName)
-                .GetDocumentsAsync()).Count;
+                .WhereEqualsTo("CategoryID", item.CategoryID);
+
+            //if(item.StateID != null)
+            //{
+            //    query = query
+            //        .WhereEqualsTo("StateID", item.StateID);
+            //}
+            //if(item.ItemName != null)
+            //{
+            //    query = query
+            //        .WhereEqualsTo("ItemName", item.ItemName);
+            //}
+
+            return (await query
+                .GetDocumentsAsync())
+                .Count;
         }
 
         public async Task InsertItemAsync(ItemModel item)
         {
+            item.ID = (await Current.Instance
+                .GetCollection("Items")
+                .WhereEqualsTo("CategoryID", item.CategoryID)
+                .GetDocumentsAsync())
+                .Count;
+
             await Current.Instance
                 .GetCollection("Items")
                 .AddDocumentAsync(item);
@@ -271,12 +314,8 @@ namespace myBacklog.Services
                 .WhereEqualsTo("ItemName", item.ItemName)
                 .GetDocumentsAsync();
             var id = result.Documents.FirstOrDefault().Id;
-
             item.ItemID = id;
-            item.ID = (await Current.Instance
-                .GetCollection("Items")
-                .GetDocumentsAsync())
-                .Count;
+
             await UpdateItemAsync(item);
         }
 
@@ -292,10 +331,10 @@ namespace myBacklog.Services
                 .GetCollection("Items")
                 .WhereEqualsTo("CategoryID", category.CategoryID)
                 .WhereLessThan("ID", id)
+                .OrderBy("ID", true)
                 .LimitTo(count)
                 .GetDocumentsAsync();
             return result.ToObjects<ItemModel>()
-                .OrderByDescending(x => x.ID)
                 .ToList();
         }
 
@@ -309,10 +348,11 @@ namespace myBacklog.Services
             var result = await Current.Instance
                 .GetCollection("Items")
                 .WhereEqualsTo("StateID", state.StateID)
-                .WhereLessThan("ID", id).LimitTo(count)
+                .WhereLessThan("ID", id)
+                .OrderBy("ID", true)
+                .LimitTo(count)
                 .GetDocumentsAsync();
             return result.ToObjects<ItemModel>()
-                .OrderByDescending(x => x.ID)
                 .ToList();
         }
 
@@ -335,11 +375,13 @@ namespace myBacklog.Services
             {
                 query = query.WhereEqualsTo("ItemName", item.ItemName);
             }
-            var result = await query.WhereLessThan("ID", id)
+            var result = await query
+                .WhereLessThan("ID", id)
+                .OrderBy("ID", true)
+                .LimitTo(10)
                 .GetDocumentsAsync();
 
             return result.ToObjects<ItemModel>()
-                .OrderByDescending(x => x.ID)
                 .ToList();
         }
 

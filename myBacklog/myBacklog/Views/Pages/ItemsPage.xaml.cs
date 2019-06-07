@@ -65,7 +65,7 @@ namespace myBacklog.Views
         }
 
         #region override Page events
-        protected override async void OnAppearing()
+        protected override void OnAppearing()
         {
             base.OnAppearing();
 
@@ -77,7 +77,7 @@ namespace myBacklog.Views
                 BottomPanel.MinimumHeightRequest = BottomPanel.Height;
                 ButtonsPanel.MinimumHeightRequest = ButtonsPanel.Height;
 
-                await BottomPanel.Hide(0);
+                BottomPanel.HeightRequest = 0;
 
                 NewItemStack.IsVisible = false;
                 EditItemStack.IsVisible = false;
@@ -119,10 +119,6 @@ namespace myBacklog.Views
         {
             var states = ViewModel.States.ToList();
             states.RemoveAt(0);
-
-            //var viewModel = new SetCategoryViewModel(ViewModel.Category, states);
-
-            //await Navigation.PushAsync(page);
         }
 
         #region Toolbar
@@ -152,20 +148,20 @@ namespace myBacklog.Views
             BottomHeader.Text = "Search";
         }
 
-        private async void ShowBottomPanel(StackLayout target, uint length = 100)
+        private void ShowBottomPanel(StackLayout target, uint length = 100)
         {
             HideToolbar();
-            await ButtonsPanel.Hide(length);
+            ButtonsPanel.Hide(length);
 
             target.IsVisible = true;
-            await BottomPanel.Show(length);
+            BottomPanel.Show(length);
         }
 
-        private async void HideBottomPanel(uint length = 100)
+        private void HideBottomPanel(uint length = 100)
         {
-            await BottomPanel.Hide(length);
+            BottomPanel.Hide(length);
 
-            await ButtonsPanel.Show(length);
+            ButtonsPanel.Show(length);
 
             NewItemStack.IsVisible = false;
             EditItemStack.IsVisible = false;
@@ -340,21 +336,16 @@ namespace myBacklog.Views
 
     public static class Extension
     {
-        public static async Task Hide(this View obj, uint length)
+        public static void Hide(this View obj, uint length)
         {
-            var source = new TaskCompletionSource<bool>();
-            var hideAnimation = new Animation((v) => obj.HeightRequest = v, obj.HeightRequest, 0, finished: () => source.TrySetResult(true));
-            hideAnimation.Commit(obj, "Hide", length:length, finished: (v, c) => source.TrySetResult(true));
-            await source.Task;
+            var hideAnimation = new Animation((v) => obj.HeightRequest = v, obj.HeightRequest, 0);
+            hideAnimation.Commit(obj, "Hide", length: length);
         }
 
-        public static async Task Show(this View obj, uint length)
+        public static void Show(this View obj, uint length)
         {
-            var source = new TaskCompletionSource<bool>();
-            //var request = obj.Measure(obj.Width, double.PositiveInfinity);
-            //var h = request.Request.Height;
             var showAnimation = new Animation((v) => obj.HeightRequest = v, 0, obj.MinimumHeightRequest);
-            showAnimation.Commit(obj, "Show", length:length, finished: (v, c) => source.TrySetResult(true));
+            showAnimation.Commit(obj, "Show", length:length);
         }
     }
 }

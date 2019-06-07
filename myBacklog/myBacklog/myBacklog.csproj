@@ -20,13 +20,15 @@
     <PackageReference Include="PluginsPopup" Version="1.0.1" />
     <PackageReference Include="Prism.Core" Version="7.1.0.431" />
     <PackageReference Include="Prism.DryIoc.Forms" Version="7.1.0.431" />
-    <PackageReference Include="sqlite-net-pcl" Version="1.5.231" />
     <PackageReference Include="Unity" Version="5.10.3" />
     <PackageReference Include="Xamarin.Forms" Version="3.6.0.344457" />
     <PackageReference Include="Xamarin.Forms.Visual.Material" Version="3.6.0.344457" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Update="Views\Pages\ActivityPopupPage.xaml">
+      <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
+    </EmbeddedResource>
     <EmbeddedResource Update="Views\Pages\CategoriesPage.xaml">
       <Generator>MSBuild:UpdateDesignTimeXaml</Generator>
     </EmbeddedResource>

@@ -23,7 +23,7 @@ namespace myBacklog.Views
             ViewModel = BindingContext as CategoriesViewModel;
         }
 
-        private async void OpenCategoryAsync(object sender, SelectedItemChangedEventArgs e) 
+        private void OpenCategory(object sender, SelectedItemChangedEventArgs e) 
         {
             if(e.SelectedItem != null)
             {
@@ -31,5 +31,14 @@ namespace myBacklog.Views
                 CategoriesListView.SelectedItem = null;
             }
         }
-	}
+
+        private void CategoriesListView_ItemAppearing(object sender, ItemVisibilityEventArgs e)
+        {
+            var source = CategoriesListView.ItemsSource as ObservableCollection<CategoryModel>;
+            if(e.ItemIndex >= source.Count - 10)
+            {
+                ViewModel.LoadMoreCategoriesCommand.Execute(null);
+            }
+        }
+    }
 }
